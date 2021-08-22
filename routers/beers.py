@@ -28,4 +28,3 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
         "ibu": query_beers[6],
         "color": query_beers[7]
     }
-

@@ -23,4 +23,3 @@ async def get_country(country_id: int, api_key : APIKey = Depends(get_api_key)):
         "name": query_countries[1],
         "flag": query_countries[2].strip()
     }
-

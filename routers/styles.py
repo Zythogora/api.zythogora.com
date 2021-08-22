@@ -58,4 +58,3 @@ async def get_style(style_id: int, substyle_id: int, api_key : APIKey = Depends(
         "substyle_id": query_styles[2],
         "substyle_name": query_styles[3]
     }
-
