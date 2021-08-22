@@ -1,12 +1,13 @@
-from config import cursor
-from fastapi import APIRouter, HTTPException
+from config import cursor, get_api_key
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security.api_key import APIKey
 
 router = APIRouter()
 
 
 
 @router.get("/beers/{beer_id}", tags=["beers"])
-async def get_beer(beer_id: int):
+async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
     cursor.execute(
         "SELECT id, name, brewery, style, sub_style, abv, ibu, color " +
         "FROM Beers " +

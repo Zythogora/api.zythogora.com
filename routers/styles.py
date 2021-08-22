@@ -1,12 +1,13 @@
-from config import cursor
-from fastapi import APIRouter, HTTPException
+from config import cursor, get_api_key
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security.api_key import APIKey
 
 router = APIRouter()
 
 
 
 @router.get("/styles/{style_id}", tags=["styles"])
-async def get_style(style_id: int):
+async def get_style(style_id: int, api_key : APIKey = Depends(get_api_key)):
     cursor.execute(
         "SELECT Styles.id, Styles.name, SubStyles.id AS substyle_id, SubStyles.name AS substyle_name " +
         "FROM Styles " +
@@ -38,7 +39,7 @@ async def get_style(style_id: int):
         return styles
 
 @router.get("/styles/{style_id}/{substyle_id}/", tags=["styles"])
-async def get_style(style_id: int, substyle_id: int):
+async def get_style(style_id: int, substyle_id: int, api_key : APIKey = Depends(get_api_key)):
     cursor.execute(
         "SELECT Styles.id, Styles.name, SubStyles.id AS substyle_id, SubStyles.name AS substyle_name " +
         "FROM Styles " +
