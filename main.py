@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 
-from routers import beers, breweries, countries, ratings, styles, users
+from routers import beers, breweries, colors, countries, ratings, styles, users
 
 
 app = FastAPI()
 app.include_router(beers.router)
 app.include_router(breweries.router)
+app.include_router(colors.router)
 app.include_router(countries.router)
 app.include_router(ratings.router)
 app.include_router(styles.router)
