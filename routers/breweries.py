@@ -1,6 +1,7 @@
-from config import cursor, get_api_key
+from config import connection, cursor, get_api_key
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.api_key import APIKey
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -22,4 +23,34 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
         "id": query_breweries[0],
         "name": query_breweries[1],
         "country": query_breweries[2]
+    }
+
+
+class Brewery(BaseModel):
+    name: str
+    country: int
+    added_by: int
+
+@router.post("/breweries", tags=["breweries"])
+async def add_brewery(brewery: Brewery):
+    cursor.execute("SELECT id FROM Breweries WHERE name=%s", (brewery.name, ))
+    query_breweries = cursor.fetchone()
+    if query_breweries:
+        raise HTTPException(status_code=409, detail="This brewery already exists (" + str(query_breweries[0]) + ").")
+
+    cursor.execute(
+        "INSERT INTO Breweries " +
+        "(name, country, added_by) " +
+        "VALUES (%s, %s, %s)"
+    , (
+        brewery.name,
+        brewery.country,
+        brewery.added_by
+    ))
+    connection.commit()
+
+    return {
+        "id": cursor.lastrowid,
+        "name": brewery.name,
+        "country": brewery.country
     }
