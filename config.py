@@ -7,6 +7,8 @@ from datetime import datetime
 class Settings(BaseSettings):
     zythogora_db_username: str
     zythogora_db_password: str
+    zythogora_db_host:     str
+    zythogora_db_database: str
 
     class Config:
         env_file = "db_credentials"
@@ -20,8 +22,8 @@ import mysql.connector as database
 connection = database.connect(
     user=settings.zythogora_db_username,
     password=settings.zythogora_db_password,
-    host="localhost",
-    database="Zythogora"
+    host=settings.zythogora_db_host,
+    database=settings.zythogora_db_database
 )
 
 cursor = connection.cursor(prepared=True)
