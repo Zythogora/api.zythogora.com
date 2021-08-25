@@ -12,7 +12,7 @@
     "sub_style": int,
     "abv": decimal,
     "ibu": int,
-    "colour": int
+    "color": int
 }
 ```
 
