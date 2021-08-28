@@ -3,6 +3,7 @@
 ## /beers
 
 ### **[GET]** /beers/{id}
+#### Response Data
 ```json
 {
     "id": int,
@@ -19,7 +20,26 @@
 
 ## /breweries
 
+### **[POST]** /breweries
+#### Post Data
+```json
+{
+    "name": str,
+    "country": int,
+    "user": int
+}
+```
+#### Response Data
+```json
+{
+    "id": int,
+    "name": str,
+    "country": int
+}
+```
+
 ### **[GET]** /breweries/{id}
+#### Response Data
 ```json
 {
     "id": int,
@@ -32,6 +52,7 @@
 ## /colors
 
 ### **[GET]** /colors/{id}
+#### Response Data
 ```json
 {
     "id": int,
@@ -44,6 +65,7 @@
 ## /countries
 
 ### **[GET]** /countries/{id}
+#### Response Data
 ```json
 {
     "id": int,
@@ -56,6 +78,7 @@
 ## /ratings
 
 ### **[GET]** /ratings/{id}
+#### Response Data
 ```json
 {
     "id": int,
@@ -91,6 +114,7 @@
 ## /servings
 
 ### **[GET]** /servings/{id}
+#### Response Data
 ```json
 {
     "id": int,
@@ -102,7 +126,7 @@
 ## /styles
 
 ### **[GET]** /styles/{id}
-
+#### Response Data
 ```json
 [
     {
@@ -116,7 +140,7 @@
 ```
 
 ### **[GET]** /styles/{id}/{substyle_id}
-
+#### Response Data
 ```json
 {
     "id": int,
@@ -131,6 +155,7 @@
 ## /users
 
 ### **[GET]** /users/{id}
+#### Response Data
 ```json
 {
     "id": int,

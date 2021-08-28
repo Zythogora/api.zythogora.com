@@ -29,7 +29,7 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
 class Brewery(BaseModel):
     name: str
     country: int
-    added_by: int
+    user: int
 
 @router.post("/breweries", tags=["breweries"])
 async def add_brewery(brewery: Brewery):
@@ -45,7 +45,7 @@ async def add_brewery(brewery: Brewery):
     , (
         brewery.name,
         brewery.country,
-        brewery.added_by
+        brewery.user
     ))
     connection.commit()
 
