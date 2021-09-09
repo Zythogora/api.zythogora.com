@@ -2,6 +2,33 @@
 
 ## /beers
 
+### **[POST]** /beers
+#### Post Data
+```json
+{
+    "name": str,
+    "brewery": int,
+    "style": int,
+    "sub_style": int,
+    "abv": decimal,
+    "ibu": int,
+    "color": int
+}
+```
+#### Response Data
+```json
+{
+    "id": int,
+    "name": str,
+    "brewery": int,
+    "style": int,
+    "sub_style": int,
+    "abv": decimal,
+    "ibu": int,
+    "color": int
+}
+```
+
 ### **[GET]** /beers/{id}
 #### Response Data
 ```json
@@ -25,8 +52,7 @@
 ```json
 {
     "name": str,
-    "country": int,
-    "user": int
+    "country": int
 }
 ```
 #### Response Data
@@ -124,6 +150,24 @@
 
 
 ## /styles
+
+### **[POST]** /styles
+#### Post Data
+```json
+{
+    "name": str,
+    "substyle_name": str
+}
+```
+#### Response Data
+```json
+{
+    "id": int,
+    "name": str,
+    "substyle_id": int,
+    "substyle_name": str,
+}
+```
 
 ### **[GET]** /styles/{id}
 #### Response Data
