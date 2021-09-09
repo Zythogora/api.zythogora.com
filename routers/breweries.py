@@ -7,6 +7,36 @@ router = APIRouter()
 
 
 
+class Brewery(BaseModel):
+    name: str
+    country: int
+
+@router.post("/breweries", tags=["breweries"])
+async def add_brewery(brewery: Brewery, api_key : APIKey = Depends(get_api_key)):
+    cursor.execute("SELECT id FROM Breweries WHERE name=%s", (brewery.name, ))
+    query_breweries = cursor.fetchone()
+    if query_breweries:
+        raise HTTPException(status_code=409, detail="This brewery already exists (" + str(query_breweries[0]) + ").")
+
+    cursor.execute(
+        "INSERT INTO Breweries " +
+        "(name, country, added_by) " +
+        "VALUES (%s, %s, %s)"
+    , (
+        brewery.name,
+        brewery.country,
+        api_key["user"]
+    ))
+    connection.commit()
+
+    return {
+        "id": cursor.lastrowid,
+        "name": brewery.name,
+        "country": brewery.country
+    }
+
+
+
 @router.get("/breweries/{brewery_id}", tags=["breweries"])
 async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
     cursor.execute(
@@ -26,31 +56,3 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
     }
 
 
-class Brewery(BaseModel):
-    name: str
-    country: int
-    user: int
-
-@router.post("/breweries", tags=["breweries"])
-async def add_brewery(brewery: Brewery):
-    cursor.execute("SELECT id FROM Breweries WHERE name=%s", (brewery.name, ))
-    query_breweries = cursor.fetchone()
-    if query_breweries:
-        raise HTTPException(status_code=409, detail="This brewery already exists (" + str(query_breweries[0]) + ").")
-
-    cursor.execute(
-        "INSERT INTO Breweries " +
-        "(name, country, added_by) " +
-        "VALUES (%s, %s, %s)"
-    , (
-        brewery.name,
-        brewery.country,
-        brewery.user
-    ))
-    connection.commit()
-
-    return {
-        "id": cursor.lastrowid,
-        "name": brewery.name,
-        "country": brewery.country
-    }
