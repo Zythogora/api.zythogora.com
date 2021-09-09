@@ -1,5 +1,5 @@
 from config import connection, cursor, get_api_key
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
@@ -12,25 +12,29 @@ class Brewery(BaseModel):
     country: int
 
 @router.post("/breweries", tags=["breweries"])
-async def add_brewery(brewery: Brewery, api_key : APIKey = Depends(get_api_key)):
+async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = Depends(get_api_key)):
     cursor.execute("SELECT id FROM Breweries WHERE name=%s", (brewery.name, ))
     query_breweries = cursor.fetchone()
-    if query_breweries:
-        raise HTTPException(status_code=409, detail="This brewery already exists (" + str(query_breweries[0]) + ").")
 
-    cursor.execute(
-        "INSERT INTO Breweries " +
-        "(name, country, added_by) " +
-        "VALUES (%s, %s, %s)"
-    , (
-        brewery.name,
-        brewery.country,
-        api_key["user"]
-    ))
-    connection.commit()
+    if query_breweries:
+        brewery_id = query_breweries[0]
+        response.status_code = status.HTTP_409_CONFLICT
+
+    else:
+        cursor.execute(
+            "INSERT INTO Breweries " +
+            "(name, country, added_by) " +
+            "VALUES (%s, %s, %s)"
+        , (
+            brewery.name,
+            brewery.country,
+            api_key["user"]
+        ))
+        connection.commit()
+        brewery_id = cursor.lastrowid
 
     return {
-        "id": cursor.lastrowid,
+        "id": brewery_id,
         "name": brewery.name,
         "country": brewery.country
     }

@@ -1,5 +1,5 @@
 from config import connection, cursor, get_api_key
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
@@ -12,7 +12,7 @@ class Style(BaseModel):
     substyle_name: str = None
 
 @router.post("/styles", tags=["styles"])
-async def add_style(style: Style, api_key : APIKey = Depends(get_api_key)):
+async def add_style(response: Response, style: Style, api_key : APIKey = Depends(get_api_key)):
     style_id = None
     substyle_id = None
 
@@ -24,14 +24,15 @@ async def add_style(style: Style, api_key : APIKey = Depends(get_api_key)):
 
         if style.substyle_name:
             cursor.execute(
-                "SELECT Styles.id AS id FROM Styles " +
+                "SELECT SubStyles.id AS id FROM Styles " +
                 "LEFT JOIN SubStyles ON Styles.id = SubStyles.style " +
                 "WHERE Styles.name = %s AND SubStyles.name = %s"
             , (style.name, style.substyle_name))
             query_substyles = cursor.fetchone()
 
             if query_substyles:
-                raise HTTPException(status_code=409, detail="This style already exists.")
+                substyle_id = query_substyles[0]
+                response.status_code = status.HTTP_409_CONFLICT
 
             else:
                 cursor.execute(
@@ -47,7 +48,7 @@ async def add_style(style: Style, api_key : APIKey = Depends(get_api_key)):
                 substyle_id = cursor.lastrowid
 
         else:
-            raise HTTPException(status_code=409, detail="This style already exists.")
+            response.status_code = status.HTTP_409_CONFLICT
 
     else:
         cursor.execute(

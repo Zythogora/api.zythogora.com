@@ -1,5 +1,5 @@
 from config import connection, cursor, get_api_key
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
@@ -17,45 +17,48 @@ class Beer(BaseModel):
     color: int
 
 @router.post("/beers", tags=["beers"])
-async def add_beer(beer: Beer, api_key : APIKey = Depends(get_api_key)):
+async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(get_api_key)):
     cursor.execute("SELECT id FROM Beers WHERE name=%s AND brewery=%s", (beer.name, beer.brewery ))
     query_beers = cursor.fetchone()
     if query_beers:
-        raise HTTPException(status_code=409, detail="This beer already exists (" + str(query_beers[0]) + ").")
+        beer_id = query_beers[0]
+        response.status_code = status.HTTP_409_CONFLICT
 
-    if beer.substyle:
-        cursor.execute(
-            "INSERT INTO Beers " +
-            "(name, brewery, style, substyle, abv, ibu, color, added_by)" +
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-        , (
-            beer.name,
-            beer.brewery,
-            beer.style,
-            beer.substyle,
-            beer.abv,
-            beer.ibu,
-            beer.color,
-            api_key["user"]
-        ))
     else:
-        cursor.execute(
-            "INSERT INTO Beers " +
-            "(name, brewery, style, abv, ibu, color, added_by)" +
-            "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        , (
-            beer.name,
-            beer.brewery,
-            beer.style,
-            beer.abv,
-            beer.ibu,
-            beer.color,
-            api_key["user"]
-        ))
-    connection.commit()
+        if beer.substyle:
+            cursor.execute(
+                "INSERT INTO Beers " +
+                "(name, brewery, style, substyle, abv, ibu, color, added_by)" +
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            , (
+                beer.name,
+                beer.brewery,
+                beer.style,
+                beer.substyle,
+                beer.abv,
+                beer.ibu,
+                beer.color,
+                api_key["user"]
+            ))
+        else:
+            cursor.execute(
+                "INSERT INTO Beers " +
+                "(name, brewery, style, abv, ibu, color, added_by)" +
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            , (
+                beer.name,
+                beer.brewery,
+                beer.style,
+                beer.abv,
+                beer.ibu,
+                beer.color,
+                api_key["user"]
+            ))
+        connection.commit()
+        beer_id = cursor.lastrowid
 
     return {
-        "id": cursor.lastrowid,
+        "id": beer_id,
         "name": beer.name,
         "beer": beer.brewery,
         "style": beer.style,
