@@ -28,7 +28,7 @@ async def get_color(color_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/colors/search/{color_name}", tags=["colors"])
-async def search_beer(color_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+async def search_color(color_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
     cursor.execute("SELECT id, name FROM Colors")
     query_colors = cursor.fetchall()
 
