@@ -1,4 +1,4 @@
-from config import connection, cursor, get_api_key
+from config import connection, cursor, get_api_key, search
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
@@ -130,3 +130,36 @@ async def get_style(style_id: int, substyle_id: int, api_key : APIKey = Depends(
         "substyle_id": query_styles[2],
         "substyle_name": query_styles[3]
     }
+
+
+
+@router.get("/styles/search/{style_name}", tags=["styles"])
+async def search_style(style_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+    cursor.execute("""
+        SELECT
+            Styles.id      AS id,
+            Styles.name    AS name,
+            SubStyles.id   AS substyle_id,
+            SubStyles.name AS substyle_name
+        FROM Styles
+        LEFT JOIN SubStyles ON Styles.id = SubStyles.style
+    """)
+    query_styles = cursor.fetchall()
+
+    styles_list = [ ]
+    for row in query_styles:
+        styles_list.append((
+            (row[0], row[2]),
+            row[3] + " " + row[1] if row[2] else row[1]
+        ))
+
+    data = await search(style_name, styles_list, count)
+
+    res = [ ]
+    for el in data:
+        res.append({
+            "id": el[0],
+            "substyle_id": el[1]
+        })
+
+    return res
