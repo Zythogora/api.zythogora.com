@@ -1,4 +1,4 @@
-from config import connection, cursor, get_api_key
+from config import connection, cursor, get_api_key, search
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
@@ -60,3 +60,10 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
     }
 
 
+
+@router.get("/breweries/search/{brewery_name}", tags=["breweries"])
+async def search_brewery(brewery_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+    cursor.execute("SELECT id, name FROM Breweries")
+    query_breweries = cursor.fetchall()
+
+    return await search(brewery_name, query_breweries, count)
