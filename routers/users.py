@@ -1,4 +1,4 @@
-from config import cursor, get_api_key
+from config import cursor, get_api_key, search
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.api_key import APIKey
 
@@ -25,3 +25,12 @@ async def get_user(user_id: int, api_key : APIKey = Depends(get_api_key)):
         "nationality": query_users[2],
         "ratings": query_users[3]
     }
+
+
+
+@router.get("/users/search/{username}", tags=["users"])
+async def search_serving(username: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+    cursor.execute("SELECT id, username FROM Users")
+    query_users = cursor.fetchall()
+
+    return await search(username, query_users, count)
