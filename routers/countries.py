@@ -1,4 +1,4 @@
-from config import cursor, get_api_key
+from config import cursor, get_api_key, search
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.api_key import APIKey
 
@@ -23,3 +23,12 @@ async def get_country(country_id: int, api_key : APIKey = Depends(get_api_key)):
         "name": query_countries[1],
         "flag": query_countries[2].strip()
     }
+
+
+
+@router.get("/countries/search/{country_name}", tags=["countries"])
+async def search_country(country_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+    cursor.execute("SELECT id, name FROM Countries")
+    query_countries = cursor.fetchall()
+
+    return await search(country_name, query_countries, count)
