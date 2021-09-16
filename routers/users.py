@@ -29,7 +29,7 @@ async def get_user(user_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/users/search/{username}", tags=["users"])
-async def search_serving(username: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+async def search_user(username: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
     cursor.execute("SELECT id, username FROM Users")
     query_users = cursor.fetchall()
 
