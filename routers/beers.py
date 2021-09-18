@@ -3,6 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
+from routers.breweries import get_brewery
+from routers.colors import get_color
+from routers.styles import get_style, get_styles
+
 router = APIRouter()
 
 
@@ -82,15 +86,27 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
     if not query_beers:
         raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
 
+    brewery = await get_brewery(query_beers[2], api_key)
+
+    if query_beers[4]:
+        style = await get_style(query_beers[3], query_beers[4], api_key)
+    else:
+        style = (await get_styles(query_beers[3], api_key))[0]
+        style["substyle"] = None
+
+    if query_beers[7]:
+        color = await get_color(query_beers[7], api_key)
+    else:
+        color = None
+
     return {
         "id": query_beers[0],
         "name": query_beers[1],
-        "brewery": query_beers[2],
-        "style": query_beers[3],
-        "substyle": query_beers[4],
+        "brewery": brewery,
+        "style": style,
         "abv": query_beers[5],
         "ibu": query_beers[6],
-        "color": query_beers[7]
+        "color": color
     }
 
 
