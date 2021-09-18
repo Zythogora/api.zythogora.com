@@ -35,13 +35,7 @@ async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = D
         connection.commit()
         brewery_id = cursor.lastrowid
 
-    country = await get_country(query_breweries[2], api_key)
-
-    return {
-        "id": brewery_id,
-        "name": brewery.name,
-        "country": country
-    }
+    return await get_brewery(brewery_id, api_key)
 
 
 
