@@ -31,7 +31,10 @@ async def add_style(response: Response, style: Style, api_key : APIKey = Depends
             query_substyles = cursor.fetchone()
 
             if query_substyles:
-                substyle_id = query_substyles[0]
+                substyle = {
+                    "id": query_substyles[0],
+                    "name": style.substyle_name
+                }
                 response.status_code = status.HTTP_409_CONFLICT
 
             else:
@@ -45,9 +48,13 @@ async def add_style(response: Response, style: Style, api_key : APIKey = Depends
                     api_key["user"]
                 ))
                 connection.commit()
-                substyle_id = cursor.lastrowid
+                substyle = {
+                    "id": cursor.lastrowid,
+                    "name": style.substyle_name
+                }
 
         else:
+            substyle = None
             response.status_code = status.HTTP_409_CONFLICT
 
     else:
@@ -73,19 +80,23 @@ async def add_style(response: Response, style: Style, api_key : APIKey = Depends
                 api_key["user"]
             ))
             connection.commit()
-            substyle_id = cursor.lastrowid
+            substyle = {
+                "id": cursor.lastrowid,
+                "name": style.substyle_name
+            }
+        else:
+            substyle = None
 
     return {
         "id": style_id,
         "name": style.name,
-        "substyle_id": substyle_id,
-        "substyle_name": style.substyle_name
+        "substyle": substyle
     }
 
 
 
 @router.get("/styles/{style_id}", tags=["styles"])
-async def get_style(style_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_styles(style_id: int, api_key : APIKey = Depends(get_api_key)):
     cursor.execute(
         "SELECT Styles.id, Styles.name, SubStyles.id AS substyle_id, SubStyles.name AS substyle_name " +
         "FROM Styles " +
@@ -103,8 +114,10 @@ async def get_style(style_id: int, api_key : APIKey = Depends(get_api_key)):
         styles.append({
             "id": row[0],
             "name": row[1],
-            "substyle_id": row[2],
-            "substyle_name": row[3]
+            "substyle": {
+                "id": row[2],
+                "name": row[3]
+            }
         })
     return styles
 
@@ -127,8 +140,10 @@ async def get_style(style_id: int, substyle_id: int, api_key : APIKey = Depends(
     return {
         "id": query_styles[0],
         "name": query_styles[1],
-        "substyle_id": query_styles[2],
-        "substyle_name": query_styles[3]
+        "substyle": {
+            "id": query_styles[2],
+            "name": query_styles[3]
+        }
     }
 
 
