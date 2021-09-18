@@ -28,7 +28,7 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
         if beer.substyle:
             cursor.execute(
                 "INSERT INTO Beers " +
-                "(name, brewery, style, substyle, abv, ibu, color, added_by)" +
+                "(name, brewery, style, sub_style, abv, ibu, color, added_by)" +
                 "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             , (
                 beer.name,
