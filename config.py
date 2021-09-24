@@ -30,19 +30,30 @@ cursor = connection.cursor(prepared=True)
 
 
 
+from argon2 import PasswordHasher
+
 key = APIKeyQuery(name="api-key", auto_error=False)
 async def get_api_key(request: Request, key: str = Security(key)):
-    cursor.execute(
-        "SELECT id, user, api_key, is_dev, iat, exp " +
-        "FROM API_Keys " +
-        "WHERE api_key = %s"
-    , (key,))
-    query_apikey = cursor.fetchone()
+    cursor.execute("""
+        SELECT id, user, key_hash, permissions, is_dev, iat, exp
+        FROM API_Keys
+        WHERE key_help LIKE %s
+    """, (key[:4] + "%" + key[31:],))
+    query_apikey = cursor.fetchall()
 
     if not query_apikey:
         raise HTTPException(status_code=403, detail="Invalid API Key.")
 
-    if query_apikey[5] < datetime.now():
+    api_key = None
+    for el in query_apikey:
+        try:
+            if PasswordHasher().verify(el[2], key):
+                api_key = el
+                break
+        except:
+            continue
+
+    if not api_key or api_key[6] < datetime.now():
         raise HTTPException(status_code=403, detail="Invalid API Key.")
 
     cursor.execute(
@@ -50,7 +61,7 @@ async def get_api_key(request: Request, key: str = Security(key)):
         "(api_key, method, endpoint, ip, port) " +
         "VALUES (%s, %s, %s, %s, %s)"
     , (
-        key,
+        api_key[0],
         request.method,
         request.url.path,
         request.client.host,
@@ -59,9 +70,11 @@ async def get_api_key(request: Request, key: str = Security(key)):
     connection.commit()
 
     return {
-        "user": query_apikey[1],
-        "api_key": query_apikey[2],
-        "is_dev": query_apikey[3]
+        "api_key": api_key[0],
+        "user": api_key[1],
+        "permissions": api_key[3],
+        "is_dev": api_key[4],
+        "exp": api_key[6]
     }
 
 
