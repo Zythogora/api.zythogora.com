@@ -1,0 +1,4 @@
+argon2
+fastapi
+pydantic
+pyjarowinkler
