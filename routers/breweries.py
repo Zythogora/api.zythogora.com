@@ -63,7 +63,15 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
 
 @router.get("/breweries/search/{brewery_name}", tags=["breweries"])
 async def search_brewery(brewery_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
-    cursor.execute("SELECT id, name FROM Breweries")
+    cursor.execute("""
+        SELECT Breweries.id, Breweries.name, SUM(Sub.popularity) AS popularity FROM (
+            SELECT Beers.id, Beers.brewery, SUM(Ratings.score) AS popularity FROM Beers
+            LEFT JOIN Ratings ON Beers.id = Ratings.beer
+            GROUP BY Ratings.beer
+        ) AS Sub
+        LEFT JOIN Breweries ON Breweries.id = Sub.brewery
+        GROUP BY Breweries.id ORDER BY popularity DESC
+    """)
     query_breweries = cursor.fetchall()
 
     return await search(brewery_name, query_breweries, count)
