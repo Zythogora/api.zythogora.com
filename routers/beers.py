@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from routers.breweries import get_brewery
 from routers.colors import get_color
 from routers.styles import get_style, get_styles
+from routers.ratings import get_rating
 
 router = APIRouter()
 
@@ -99,6 +100,24 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
         "ibu": query_beers[6],
         "color": color
     }
+
+
+
+@router.get("/beers/{beer_id}/ratings", tags=["beers"])
+async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+    cursor.execute("""
+        SELECT id FROM Ratings
+        WHERE beer = %s
+        ORDER BY date DESC
+    """, (beer_id,))
+    query_ratings = cursor.fetchall()
+
+    res = [ ]
+    for row in query_ratings:
+        rating = await get_rating(row[0], api_key)
+        res.append(rating)
+
+    return res
 
 
 
