@@ -1,4 +1,6 @@
-argon2
+argon2-cffi
 fastapi
+mysql-connector-python
 pydantic
 pyjarowinkler
+python-dotenv
