@@ -3,6 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
+import routers.beers as r_beers
+import routers.servings as r_servings
+import routers.users as r_users
+
 router = APIRouter()
 
 
@@ -162,16 +166,24 @@ async def get_rating(rating_id: int, api_key : APIKey = Depends(get_api_key)):
         if query_ratings[23]:
             aromas["coffee"] = True
 
+    user = await r_users.get_user(query_ratings[1], api_key)
+    beer = await r_beers.get_beer(query_ratings[2], api_key)
+
+    if query_ratings[8]:
+        serving = await r_servings.get_serving(query_ratings[8], api_key)
+    else:
+        serving = None
+
     return {
         "id": query_ratings[0],
-        "user": query_ratings[1],
-        "beer": query_ratings[2],
+        "user": user,
+        "beer": beer,
         "appearance": query_ratings[3],
         "smell": query_ratings[4],
         "taste": query_ratings[5],
         "aftertaste": query_ratings[6],
         "score": query_ratings[7],
-        "serving": query_ratings[8],
+        "serving": serving,
         "aromas": aromas,
         "comment": query_ratings[24],
         "date": query_ratings[25]
