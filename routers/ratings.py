@@ -88,8 +88,8 @@ async def add_rating(response: Response, rating: Rating, api_key : APIKey = Depe
             %s
         )
     """, (
-        rating.beer,
         api_key["user"],
+        rating.beer,
         rating.appearance, rating.smell, rating.taste, rating.aftertaste,
         rating.score,
         rating.serving,
