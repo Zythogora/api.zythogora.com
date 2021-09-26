@@ -2,6 +2,8 @@ from config import cursor, get_api_key, search
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.api_key import APIKey
 
+import routers.ratings as r_ratings
+
 router = APIRouter()
 
 
@@ -25,6 +27,24 @@ async def get_user(user_id: int, api_key : APIKey = Depends(get_api_key)):
         "nationality": query_users[2],
         "ratings": query_users[3]
     }
+
+
+
+@router.get("/users/{user_id}/ratings", tags=["users"])
+async def get_user_ratings(user_id: int, api_key : APIKey = Depends(get_api_key)):
+    cursor.execute("""
+        SELECT id FROM Ratings
+        WHERE user = %s
+        ORDER BY date DESC
+    """, (user_id,))
+    query_ratings = cursor.fetchall()
+
+    res = [ ]
+    for row in query_ratings:
+        rating = await r_ratings.get_rating(row[0], api_key)
+        res.append(rating)
+
+    return res
 
 
 
