@@ -129,6 +129,39 @@ async def get_rating(rating_id: int, api_key : APIKey = Depends(get_api_key)):
     if not query_ratings:
         raise HTTPException(status_code=404, detail="The rating you requested does not exist.")
 
+    aromas = { }
+    if not query_ratings[9] is None:
+        if query_ratings[9]:
+            aromas["malty"] = True
+        if query_ratings[10]:
+            aromas["hoppy"] = True
+        if query_ratings[11]:
+            aromas["yeasty"] = True
+        if query_ratings[12]:
+            aromas["earthy"] = True
+        if query_ratings[13]:
+            aromas["herbal"] = True
+        if query_ratings[14]:
+            aromas["woody"] = True
+        if query_ratings[15]:
+            aromas["citrus"] = True
+        if query_ratings[16]:
+            aromas["redfruits"] = True
+        if query_ratings[17]:
+            aromas["tropicalfruits"] = True
+        if query_ratings[18]:
+            aromas["honey"] = True
+        if query_ratings[19]:
+            aromas["nut"] = True
+        if query_ratings[20]:
+            aromas["spices"] = True
+        if query_ratings[21]:
+            aromas["caramel"] = True
+        if query_ratings[22]:
+            aromas["chocolate"] = True
+        if query_ratings[23]:
+            aromas["coffee"] = True
+
     return {
         "id": query_ratings[0],
         "user": query_ratings[1],
@@ -136,24 +169,10 @@ async def get_rating(rating_id: int, api_key : APIKey = Depends(get_api_key)):
         "appearance": query_ratings[3],
         "smell": query_ratings[4],
         "taste": query_ratings[5],
-        "aftertaste": query_ratings[7],
+        "aftertaste": query_ratings[6],
         "score": query_ratings[7],
         "serving": query_ratings[8],
-        "aromas_malty": query_ratings[9],
-        "aromas_hoppy": query_ratings[10],
-        "aromas_yeasty": query_ratings[11],
-        "aromas_earthy": query_ratings[12],
-        "aromas_herbal": query_ratings[13],
-        "aromas_woody": query_ratings[14],
-        "aromas_citrus": query_ratings[15],
-        "aromas_redfruits": query_ratings[16],
-        "aromas_tropicalfruits": query_ratings[17],
-        "aromas_honey": query_ratings[18],
-        "aromas_nut": query_ratings[19],
-        "aromas_spices": query_ratings[20],
-        "aromas_caramel": query_ratings[21],
-        "aromas_chocolate": query_ratings[22],
-        "aromas_coffee": query_ratings[23],
+        "aromas": aromas,
         "comment": query_ratings[24],
         "date": query_ratings[25]
     }
