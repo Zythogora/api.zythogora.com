@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
-from routers.breweries import get_brewery
-from routers.colors import get_color
-from routers.styles import get_style, get_styles
-from routers.ratings import get_rating
+import routers.breweries as r_breweries
+import routers.colors as r_colors
+import routers.styles as r_styles
+import routers.ratings as r_ratings
 
 router = APIRouter()
 
@@ -62,7 +62,7 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
         connection.commit()
         beer_id = cursor.lastrowid
 
-    return await get_beer(beer_id, api_key)
+    return await r_beers.get_beer(beer_id, api_key)
 
 
 
@@ -78,16 +78,16 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
     if not query_beers:
         raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
 
-    brewery = await get_brewery(query_beers[2], api_key)
+    brewery = await r_breweries.get_brewery(query_beers[2], api_key)
 
     if query_beers[4]:
-        style = await get_style(query_beers[3], query_beers[4], api_key)
+        style = await r_styles.get_style(query_beers[3], query_beers[4], api_key)
     else:
-        style = (await get_styles(query_beers[3], api_key))[0]
+        style = (await r_styles.get_styles(query_beers[3], api_key))[0]
         style["substyle"] = None
 
     if query_beers[7]:
-        color = await get_color(query_beers[7], api_key)
+        color = await r_colors.get_color(query_beers[7], api_key)
     else:
         color = None
 
@@ -114,7 +114,7 @@ async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)
 
     res = [ ]
     for row in query_ratings:
-        rating = await get_rating(row[0], api_key)
+        rating = await r_ratings.get_rating(row[0], api_key)
         res.append(rating)
 
     return res

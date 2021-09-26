@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
-from routers.countries import get_country
+import routers.countries as r_countries
 
 router = APIRouter()
 
@@ -51,7 +51,7 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
     if not query_breweries:
         raise HTTPException(status_code=404, detail="The brewery you requested does not exist.")
 
-    country = await get_country(query_breweries[2], api_key)
+    country = await r_countries.get_country(query_breweries[2], api_key)
 
     return {
         "id": query_breweries[0],
