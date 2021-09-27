@@ -62,7 +62,7 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
         connection.commit()
         beer_id = cursor.lastrowid
 
-    return await r_beers.get_beer(beer_id, api_key)
+    return await get_beer(beer_id, api_key)
 
 
 
