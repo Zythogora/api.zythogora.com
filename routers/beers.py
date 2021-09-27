@@ -130,4 +130,11 @@ async def search_beer(beer_name: str, count: int = 10, api_key: APIKey = Depends
     """)
     query_beers = cursor.fetchall()
 
-    return await search(beer_name, query_beers, count)
+    beer_ids = await search(beer_name, query_beers, count)
+
+    res = [ ]
+    for i in beer_ids:
+        data = await get_beer(i, api_key)
+        res.append(data)
+
+    return res

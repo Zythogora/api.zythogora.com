@@ -74,4 +74,11 @@ async def search_brewery(brewery_name: str, count: int = 10, api_key: APIKey = D
     """)
     query_breweries = cursor.fetchall()
 
-    return await search(brewery_name, query_breweries, count)
+    brewery_ids = await search(brewery_name, query_breweries, count)
+
+    res = [ ]
+    for i in brewery_ids:
+        data = await get_brewery(i, api_key)
+        res.append(data)
+
+    return res

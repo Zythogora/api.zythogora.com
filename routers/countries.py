@@ -31,4 +31,11 @@ async def search_country(country_name: str, count: int = 10, api_key: APIKey = D
     cursor.execute("SELECT id, name FROM Countries")
     query_countries = cursor.fetchall()
 
-    return await search(country_name, query_countries, count)
+    country_ids = await search(country_name, query_countries, count)
+
+    res = [ ]
+    for i in country_ids:
+        data = await get_country(i, api_key)
+        res.append(data)
+
+    return res

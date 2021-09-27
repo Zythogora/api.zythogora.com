@@ -172,9 +172,11 @@ async def search_style(style_name: str, count: int = 10, api_key: APIKey = Depen
 
     res = [ ]
     for el in data:
-        res.append({
-            "id": el[0],
-            "substyle_id": el[1]
-        })
+        if el[1]:
+            style = await get_style(el[0], el[1], api_key)
+        else:
+            style = (await get_styles(el[0], api_key))[0]
+            style["substyle"] = None
+        res.append(style)
 
     return res

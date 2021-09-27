@@ -30,4 +30,11 @@ async def search_serving(serving_name: str, count: int = 10, api_key: APIKey = D
     cursor.execute("SELECT id, name FROM Servings")
     query_servings = cursor.fetchall()
 
-    return await search(serving_name, query_servings, count)
+    serving_ids = await search(serving_name, query_servings, count)
+
+    res = [ ]
+    for i in serving_ids:
+        data = await get_serving(i, api_key)
+        res.append(data)
+
+    return res

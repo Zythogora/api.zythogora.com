@@ -31,4 +31,11 @@ async def search_color(color_name: str, count: int = 10, api_key: APIKey = Depen
     cursor.execute("SELECT id, name FROM Colors")
     query_colors = cursor.fetchall()
 
-    return await search(color_name, query_colors, count)
+    color_ids = await search(color_name, query_colors, count)
+
+    res = [ ]
+    for i in color_ids:
+        data = await get_color(i, api_key)
+        res.append(data)
+
+    return res

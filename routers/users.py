@@ -53,4 +53,11 @@ async def search_user(username: str, count: int = 10, api_key: APIKey = Depends(
     cursor.execute("SELECT id, username FROM Users")
     query_users = cursor.fetchall()
 
-    return await search(username, query_users, count)
+    user_ids = await search(username, query_users, count)
+
+    res = [ ]
+    for i in user_ids:
+        data = await get_user(i, api_key)
+        res.append(data)
+
+    return res
