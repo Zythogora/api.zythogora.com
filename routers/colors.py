@@ -31,7 +31,6 @@ async def get_colors(api_key : APIKey = Depends(get_api_key)):
     cursor.execute("""
         SELECT id
         FROM Colors
-        ORDER BY name
     """)
     query_colors = cursor.fetchall()
 
