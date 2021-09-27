@@ -8,11 +8,11 @@ router = APIRouter()
 
 @router.get("/servings/{serving_id}", tags=["servings"])
 async def get_serving(serving_id: int, api_key : APIKey = Depends(get_api_key)):
-    cursor.execute(
-        "SELECT id, name " +
-        "FROM Servings " +
-        "WHERE id=%s"
-    , (serving_id,))
+    cursor.execute("""
+        SELECT id, name
+        FROM Servings
+        WHERE id=%s
+    """, (serving_id,))
     query_servings = cursor.fetchone()
 
     if not query_servings:
@@ -22,6 +22,27 @@ async def get_serving(serving_id: int, api_key : APIKey = Depends(get_api_key)):
         "id": query_servings[0],
         "name": query_servings[1]
     }
+
+
+
+@router.get("/servings", tags=["servings"])
+async def get_servings(api_key : APIKey = Depends(get_api_key)):
+    cursor.execute("""
+        SELECT id
+        FROM Servings
+        ORDER BY name
+    """)
+    query_servings = cursor.fetchall()
+
+    if not query_servings:
+        raise HTTPException(status_code=404, detail="The serving type you requested does not exist.")
+
+    res = [ ]
+    for el in query_servings:
+        data = await get_serving(el[0], api_key)
+        res.append(data)
+
+    return res
 
 
 
