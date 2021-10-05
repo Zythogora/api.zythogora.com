@@ -1,39 +1,59 @@
-from pydantic import BaseSettings
-
+from argon2 import PasswordHasher
+from datetime import datetime
 from fastapi import HTTPException, Request, Security
 from fastapi.security.api_key import APIKeyQuery
-from datetime import datetime
-
-class Settings(BaseSettings):
-    zythogora_db_username: str
-    zythogora_db_password: str
-    zythogora_db_host:     str
-    zythogora_db_database: str
-
-    class Config:
-        env_file = "db_credentials"
-
-settings = Settings()
-
-
-
+import jwt
 import mysql.connector as database
+import os
+from pyjarowinkler.distance import get_jaro_distance
+
+
 
 connection = database.connect(
-    user=settings.zythogora_db_username,
-    password=settings.zythogora_db_password,
-    host=settings.zythogora_db_host,
-    database=settings.zythogora_db_database
+    user     = os.environ["zythogora_db_username"],
+    password = os.environ["zythogora_db_password"],
+    host     = os.environ["zythogora_db_host"],
+    database = os.environ["zythogora_db_database"]
 )
 
 cursor = connection.cursor(prepared=True)
 
 
 
-from argon2 import PasswordHasher
 
 key = APIKeyQuery(name="api-key", auto_error=False)
 async def get_api_key(request: Request, key: str = Security(key)):
+
+    # No Auth
+
+    no_auth = [
+        [ "POST", "/users/login" ],
+        [ "POST", "/users/register" ],
+    ]
+
+    if [ request.method, request.url.path ] in no_auth:
+        return {}
+
+
+    # JWT Auth
+
+    jwt_header = request.headers.get("jwt")
+    if jwt_header:
+        try:
+            token = jwt.decode(jwt_header, os.environ["zythogora_jwt_secret"], algorithms=["HS512"])
+            return {
+                "user": token["client_id"],
+                "exp": token["exp"]
+            }
+        except:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+    # API Key Auth
+
+    if not key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     cursor.execute("""
         SELECT id, user, key_hash, permissions, is_dev, iat, exp
         FROM API_Keys
@@ -56,11 +76,11 @@ async def get_api_key(request: Request, key: str = Security(key)):
     if not api_key or api_key[6] < datetime.now():
         raise HTTPException(status_code=403, detail="Invalid API Key.")
 
-    cursor.execute(
-        "INSERT INTO API_Requests " +
-        "(api_key, method, endpoint, ip, port) " +
-        "VALUES (%s, %s, %s, %s, %s)"
-    , (
+    cursor.execute("""
+        INSERT INTO API_Requests
+        (api_key, method, endpoint, ip, port)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (
         api_key[0],
         request.method,
         request.url.path,
@@ -70,16 +90,12 @@ async def get_api_key(request: Request, key: str = Security(key)):
     connection.commit()
 
     return {
-        "api_key": api_key[0],
         "user": api_key[1],
-        "permissions": api_key[3],
-        "is_dev": api_key[4],
         "exp": api_key[6]
     }
 
 
 
-from pyjarowinkler.distance import get_jaro_distance
 
 async def search(search_term: str, term_query, count: int = 10):
     search_term = search_term.lower()
