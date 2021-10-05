@@ -68,11 +68,11 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
 
 @router.get("/beers/{beer_id}", tags=["beers"])
 async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
-    cursor.execute(
-        "SELECT id, name, brewery, style, sub_style, abv, ibu, color " +
-        "FROM Beers " +
-        "WHERE Beers.id = %s"
-    , (beer_id,))
+    cursor.execute("""
+        SELECT id, name, brewery, style, sub_style, abv, ibu, color
+        FROM Beers
+        WHERE id=%s
+    """, (beer_id,))
     query_beers = cursor.fetchone()
 
     if not query_beers:
@@ -105,9 +105,15 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
 
 @router.get("/beers/{beer_id}/ratings", tags=["beers"])
 async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+    cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
+    query_beers = cursor.fetchone()
+
+    if not query_beers:
+        raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
+
     cursor.execute("""
         SELECT id FROM Ratings
-        WHERE beer = %s
+        WHERE beer=%s
         ORDER BY date DESC
     """, (beer_id,))
     query_ratings = cursor.fetchall()
@@ -125,7 +131,7 @@ async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)
 async def search_beer(beer_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
     cursor.execute("""
         SELECT Beers.id, Beers.name, SUM(Ratings.score) AS popularity FROM Beers
-        LEFT JOIN Ratings ON Beers.id = Ratings.beer
+        LEFT JOIN Ratings ON Beers.id=Ratings.beer
         GROUP BY Ratings.beer ORDER BY popularity DESC
     """)
     query_beers = cursor.fetchall()

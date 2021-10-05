@@ -8,11 +8,11 @@ router = APIRouter()
 
 @router.get("/countries/{country_id}", tags=["countries"])
 async def get_country(country_id: int, api_key : APIKey = Depends(get_api_key)):
-    cursor.execute(
-        "SELECT id, name, flag " +
-        "FROM Countries " +
-        "WHERE id=%s"
-    , (country_id,))
+    cursor.execute("""
+        SELECT id, name, flag
+        FROM Countries
+        WHERE id=%s
+    """, (country_id,))
     query_countries = cursor.fetchone()
 
     if not query_countries:

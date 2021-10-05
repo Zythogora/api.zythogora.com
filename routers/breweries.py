@@ -23,11 +23,11 @@ async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = D
         response.status_code = status.HTTP_409_CONFLICT
 
     else:
-        cursor.execute(
-            "INSERT INTO Breweries " +
-            "(name, country, added_by) " +
-            "VALUES (%s, %s, %s)"
-        , (
+        cursor.execute("""
+            INSERT INTO Breweries
+            (name, country, added_by)
+            VALUES (%s, %s, %s)
+        """, (
             brewery.name,
             brewery.country,
             api_key["user"]
@@ -41,11 +41,11 @@ async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = D
 
 @router.get("/breweries/{brewery_id}", tags=["breweries"])
 async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
-    cursor.execute(
-        "SELECT id, name, country " +
-        "FROM Breweries " +
-        "WHERE id=%s"
-    , (brewery_id,))
+    cursor.execute("""
+        SELECT id, name, country
+        FROM Breweries
+        WHERE id=%s
+    """, (brewery_id,))
     query_breweries = cursor.fetchone()
 
     if not query_breweries:
