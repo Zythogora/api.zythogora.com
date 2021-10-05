@@ -35,13 +35,15 @@ async def login(login: Login, api_key : APIKey = Depends(get_api_key)):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     now = int(time.time())
-    return jwt.encode(
+    token = jwt.encode(
         {
             "client_id": query_users[0],
             "nickname": query_users[1],
             "iat": now,
             "exp": now + 60 * 60 * 24 * 7 * 6,
         }, os.environ["zythogora_jwt_secret"], algorithm="HS512")
+
+    return { "token": token }
 
 
 
@@ -83,13 +85,15 @@ async def register(register: Register, api_key : APIKey = Depends(get_api_key)):
     query_users = cursor.fetchone()
 
     now = int(time.time())
-    return jwt.encode(
+    token = jwt.encode(
         {
             "client_id": query_users[0],
             "nickname": register.username,
             "iat": now,
             "exp": now + 60 * 60 * 3,
         }, os.environ["zythogora_jwt_secret"], algorithm="HS512")
+
+    return { "token": token }
 
 
 
