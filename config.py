@@ -37,7 +37,7 @@ async def get_api_key(request: Request, key: str = Security(key)):
 
     # JWT Auth
 
-    jwt_header = request.headers.get("jwt")
+    jwt_header = request.headers.get("Authorization")
     if jwt_header:
         try:
             token = jwt.decode(jwt_header, os.environ["zythogora_jwt_secret"], algorithms=["HS512"])
