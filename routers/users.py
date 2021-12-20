@@ -144,11 +144,11 @@ async def get_user_ratings(user_uuid: str, api_key : APIKey = Depends(get_api_ke
 
 
 @router.get("/users/search/{username}", tags=["users"])
-async def search_user(username: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+async def search_user(username: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     cursor.execute("SELECT uuid, username FROM Users")
     query_users = cursor.fetchall()
 
-    user_ids = await search(username, query_users, count)
+    user_ids = await search(username, query_users, count, page)
 
     res = [ ]
     for i in user_ids:

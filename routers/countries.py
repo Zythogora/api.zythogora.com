@@ -27,11 +27,11 @@ async def get_country(country_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/countries/search/{country_name}", tags=["countries"])
-async def search_country(country_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+async def search_country(country_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     cursor.execute("SELECT id, name FROM Countries")
     query_countries = cursor.fetchall()
 
-    country_ids = await search(country_name, query_countries, count)
+    country_ids = await search(country_name, query_countries, count, page)
 
     res = [ ]
     for i in country_ids:

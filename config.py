@@ -97,8 +97,11 @@ async def get_api_key(request: Request, key: str = Security(key)):
 
 
 
-async def search(search_term: str, term_query, count: int = 10):
+async def search(search_term: str, term_query, count: int = 10, page: int = 1):
     search_term = search_term.lower()
+
+    if len(term_query) <= (page - 1) * count:
+        return [ ]
 
     res = [ ]
     contains = [ ]
@@ -109,8 +112,8 @@ async def search(search_term: str, term_query, count: int = 10):
         if term.startswith(search_term):
             res.append(el[0])
 
-            if len(res) == count:
-                return res
+            if len(res) == page * count:
+                break
 
         elif search_term in term:
             contains.append(el[0])
@@ -118,10 +121,12 @@ async def search(search_term: str, term_query, count: int = 10):
         else:
             jaro_winkler[el[0]] = get_jaro_distance(search_term, term, winkler=True)
 
-    if len(res) + len(contains) >= count:
-        return res + contains[:(count - len(res))]
+    if len(res) + len(contains) < count * page:
+        jaro_winkler = [ k for k, v in sorted(jaro_winkler.items(), key=lambda item: item[1]) ]
+        jaro_winkler.reverse()
+    else:
+        jaro_winkler = [ ]
 
-    jaro_winkler = [ k for k, v in sorted(jaro_winkler.items(), key=lambda item: item[1]) ]
-    jaro_winkler.reverse()
+    results = (res + contains + jaro_winkler)[(page - 1) * count : page * count]
 
-    return res + contains[:(count - len(res))] + jaro_winkler[:(count - len(res) - len(contains))]
+    return results

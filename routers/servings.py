@@ -47,11 +47,11 @@ async def get_servings(api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/servings/search/{serving_name}", tags=["servings"])
-async def search_serving(serving_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+async def search_serving(serving_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     cursor.execute("SELECT id, name FROM Servings")
     query_servings = cursor.fetchall()
 
-    serving_ids = await search(serving_name, query_servings, count)
+    serving_ids = await search(serving_name, query_servings, count, page)
 
     res = [ ]
     for i in serving_ids:

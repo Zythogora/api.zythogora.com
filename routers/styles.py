@@ -149,7 +149,7 @@ async def get_style(style_id: int, substyle_id: int, api_key : APIKey = Depends(
 
 
 @router.get("/styles/search/{style_name}", tags=["styles"])
-async def search_style(style_name: str, count: int = 10, api_key: APIKey = Depends(get_api_key)):
+async def search_style(style_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     cursor.execute("""
         SELECT
             Styles.id      AS id,
@@ -168,7 +168,7 @@ async def search_style(style_name: str, count: int = 10, api_key: APIKey = Depen
             row[3] + " " + row[1] if row[2] else row[1]
         ))
 
-    data = await search(style_name, styles_list, count)
+    data = await search(style_name, styles_list, count, page)
 
     res = [ ]
     for el in data:
