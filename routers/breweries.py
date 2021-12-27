@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
 
+import routers.beers as r_beers
 import routers.countries as r_countries
 
 router = APIRouter()
@@ -58,6 +59,26 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
         "name": query_breweries[1],
         "country": country
     }
+
+
+
+@router.get("/breweries/{brewery_id}/beers", tags=["breweries"])
+async def get_brewery_beers(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
+    cursor.execute("""
+        SELECT id
+        FROM Beers
+        WHERE brewery=%s
+    """, (brewery_id,))
+    query_beers = cursor.fetchall()
+
+    if not query_beers:
+        raise HTTPException(status_code=404, detail="The brewery you requested does not have any beer registered yet.")
+
+    res = [ ]
+    for el in query_beers:
+        beer = await r_beers.get_beer(el[0], api_key)
+        res.append(beer)
+    return res
 
 
 
