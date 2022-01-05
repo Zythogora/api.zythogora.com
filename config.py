@@ -16,8 +16,6 @@ connection = database.connect(
     database = os.environ["zythogora_db_database"]
 )
 
-cursor = connection.cursor(prepared=True)
-
 
 
 

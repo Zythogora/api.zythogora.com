@@ -1,4 +1,4 @@
-from config import connection, cursor, get_api_key, search
+from config import connection, get_api_key, search
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security.api_key import APIKey
 from pydantic import BaseModel
@@ -16,90 +16,94 @@ class Brewery(BaseModel):
 
 @router.post("/breweries", tags=["breweries"])
 async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = Depends(get_api_key)):
-    cursor.execute("SELECT id FROM Breweries WHERE name=%s", (brewery.name, ))
-    query_breweries = cursor.fetchone()
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("SELECT id FROM Breweries WHERE name=%s", (brewery.name, ))
+        query_breweries = cursor.fetchone()
 
-    if query_breweries:
-        brewery_id = query_breweries[0]
-        response.status_code = status.HTTP_409_CONFLICT
+        if query_breweries:
+            brewery_id = query_breweries[0]
+            response.status_code = status.HTTP_409_CONFLICT
 
-    else:
-        cursor.execute("""
-            INSERT INTO Breweries
-            (name, country, added_by)
-            VALUES (%s, %s, %s)
-        """, (
-            brewery.name,
-            brewery.country,
-            api_key["user"]
-        ))
-        connection.commit()
-        brewery_id = cursor.lastrowid
+        else:
+            cursor.execute("""
+                INSERT INTO Breweries
+                (name, country, added_by)
+                VALUES (%s, %s, %s)
+            """, (
+                brewery.name,
+                brewery.country,
+                api_key["user"]
+            ))
+            connection.commit()
+            brewery_id = cursor.lastrowid
 
-    return await get_brewery(brewery_id, api_key)
+        return await get_brewery(brewery_id, api_key)
 
 
 
 @router.get("/breweries/{brewery_id}", tags=["breweries"])
 async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
-    cursor.execute("""
-        SELECT id, name, country
-        FROM Breweries
-        WHERE id=%s
-    """, (brewery_id,))
-    query_breweries = cursor.fetchone()
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT id, name, country
+            FROM Breweries
+            WHERE id=%s
+        """, (brewery_id,))
+        query_breweries = cursor.fetchone()
 
-    if not query_breweries:
-        raise HTTPException(status_code=404, detail="The brewery you requested does not exist.")
+        if not query_breweries:
+            raise HTTPException(status_code=404, detail="The brewery you requested does not exist.")
 
-    country = await r_countries.get_country(query_breweries[2], api_key)
+        country = await r_countries.get_country(query_breweries[2], api_key)
 
-    return {
-        "id": query_breweries[0],
-        "name": query_breweries[1],
-        "country": country
-    }
+        return {
+            "id": query_breweries[0],
+            "name": query_breweries[1],
+            "country": country
+        }
 
 
 
 @router.get("/breweries/{brewery_id}/beers", tags=["breweries"])
 async def get_brewery_beers(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
-    cursor.execute("""
-        SELECT id
-        FROM Beers
-        WHERE brewery=%s
-    """, (brewery_id,))
-    query_beers = cursor.fetchall()
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT id
+            FROM Beers
+            WHERE brewery=%s
+        """, (brewery_id,))
+        query_beers = cursor.fetchall()
 
-    if not query_beers:
-        raise HTTPException(status_code=404, detail="The brewery you requested does not have any beer registered yet.")
+        if not query_beers:
+            raise HTTPException(status_code=404, detail="The brewery you requested does not have any beer registered yet.")
 
-    res = [ ]
-    for el in query_beers:
-        beer = await r_beers.get_beer(el[0], api_key)
-        res.append(beer)
-    return res
+        res = [ ]
+        for el in query_beers:
+            beer = await r_beers.get_beer(el[0], api_key)
+            res.append(beer)
+        return res
 
 
 
 @router.get("/breweries/search/{brewery_name}", tags=["breweries"])
 async def search_brewery(brewery_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
-    cursor.execute("""
-        SELECT Breweries.id, Breweries.name, SUM(Sub.popularity) AS popularity FROM (
-            SELECT Beers.id, Beers.brewery, SUM(Ratings.score) AS popularity FROM Beers
-            LEFT JOIN Ratings ON Beers.id = Ratings.beer
-            GROUP BY Ratings.beer
-        ) AS Sub
-        LEFT JOIN Breweries ON Breweries.id = Sub.brewery
-        GROUP BY Breweries.id ORDER BY popularity DESC
-    """)
-    query_breweries = cursor.fetchall()
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT Breweries.id, Breweries.name, SUM(Sub.popularity) AS popularity FROM (
+                SELECT Beers.id, Beers.brewery, SUM(Ratings.score) AS popularity FROM Beers
+                LEFT JOIN Ratings ON Beers.id = Ratings.beer
+                GROUP BY Ratings.beer
+            ) AS Sub
+            LEFT JOIN Breweries ON Breweries.id = Sub.brewery
+            GROUP BY Breweries.id ORDER BY popularity DESC
+        """)
+        query_breweries = cursor.fetchall()
 
-    brewery_ids = await search(brewery_name, query_breweries, count, page)
+        brewery_ids = await search(brewery_name, query_breweries, count, page)
 
-    res = [ ]
-    for i in brewery_ids:
-        data = await get_brewery(i, api_key)
-        res.append(data)
+        res = [ ]
+        for i in brewery_ids:
+            data = await get_brewery(i, api_key)
+            res.append(data)
 
-    return res
+        return res
