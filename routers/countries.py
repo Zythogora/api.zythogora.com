@@ -1,4 +1,4 @@
-from config import get_api_key, search
+from config import connection, get_api_key, search
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security.api_key import APIKey
 
