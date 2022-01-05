@@ -49,48 +49,49 @@ async def get_api_key(request: Request, key: str = Security(key)):
 
     # API Key Auth
 
-    if not key:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    with connection.cursor(prepared=True) as cursor:
+        if not key:
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
-    cursor.execute("""
-        SELECT id, user, key_hash, permissions, is_dev, iat, exp
-        FROM API_Keys
-        WHERE key_help LIKE %s
-    """, (key[:4] + "%" + key[31:],))
-    query_apikey = cursor.fetchall()
+        cursor.execute("""
+            SELECT id, user, key_hash, permissions, is_dev, iat, exp
+            FROM API_Keys
+            WHERE key_help LIKE %s
+        """, (key[:4] + "%" + key[31:],))
+        query_apikey = cursor.fetchall()
 
-    if not query_apikey:
-        raise HTTPException(status_code=403, detail="Invalid API Key.")
+        if not query_apikey:
+            raise HTTPException(status_code=403, detail="Invalid API Key.")
 
-    api_key = None
-    for el in query_apikey:
-        try:
-            if PasswordHasher().verify(el[2], key):
-                api_key = el
-                break
-        except:
-            continue
+        api_key = None
+        for el in query_apikey:
+            try:
+                if PasswordHasher().verify(el[2], key):
+                    api_key = el
+                    break
+            except:
+                continue
 
-    if not api_key or api_key[6] < datetime.now():
-        raise HTTPException(status_code=403, detail="Invalid API Key.")
+        if not api_key or api_key[6] < datetime.now():
+            raise HTTPException(status_code=403, detail="Invalid API Key.")
 
-    cursor.execute("""
-        INSERT INTO API_Requests
-        (api_key, method, endpoint, ip, port)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (
-        api_key[0],
-        request.method,
-        request.url.path,
-        request.client.host,
-        request.client.port
-    ))
-    connection.commit()
+        cursor.execute("""
+            INSERT INTO API_Requests
+            (api_key, method, endpoint, ip, port)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            api_key[0],
+            request.method,
+            request.url.path,
+            request.client.host,
+            request.client.port
+        ))
+        connection.commit()
 
-    return {
-        "user": api_key[1],
-        "exp": api_key[6]
-    }
+        return {
+            "user": api_key[1],
+            "exp": api_key[6]
+        }
 
 
 
