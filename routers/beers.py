@@ -131,6 +131,28 @@ async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)
 
 
 
+@router.get("/beers/{beer_id}/averageScore", tags=["beers"])
+async def get_beer_average_score(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
+        query_beers = cursor.fetchone()
+
+        if not query_beers:
+            raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
+
+        cursor.execute("""
+            SELECT AVG(score) FROM Ratings
+            WHERE beer=%s
+        """, (beer_id,))
+        query_ratings = cursor.fetchone()
+
+        if not query_ratings:
+            raise HTTPException(status_code=404, detail="The beer you requested does not have any rating.")
+
+        return query_ratings[0]
+
+
+
 @router.get("/beers/search/{beer_name}", tags=["beers"])
 async def search_beer(beer_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
