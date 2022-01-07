@@ -149,7 +149,10 @@ async def get_beer_average_score(beer_id: int, api_key : APIKey = Depends(get_ap
         if not query_ratings:
             raise HTTPException(status_code=404, detail="The beer you requested does not have any rating.")
 
-        return query_ratings[0]
+        return {
+            "id": beer_id,
+            "averageScore": query_ratings[0]
+        }
 
 
 
