@@ -29,6 +29,9 @@ async def get_api_key(request: Request, key: str = Security(key)):
         [ "POST", "/users/register" ],
     ]
 
+    if request.method == "GET":
+        return {}
+
     if [ request.method, request.url.path ] in no_auth:
         return {}
 
