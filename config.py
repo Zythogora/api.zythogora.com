@@ -22,6 +22,10 @@ connection = database.connect(
 key = APIKeyQuery(name="api-key", auto_error=False)
 async def get_api_key(request: Request, key: str = Security(key)):
 
+    # Refresh connection if needed
+
+    connection.ping(reconnect=True)
+
     # No Auth
 
     no_auth = [
