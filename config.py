@@ -115,15 +115,12 @@ async def search(search_term: str, term_query, count: int = 10, page: int = 1):
     for el in term_query:
         term = el[1].lower()
 
-        if term.startswith(search_term):
+        if term == search_term:
+            res.insert(0, el[0])
+        elif term.startswith(search_term):
             res.append(el[0])
-
-            if len(res) == page * count:
-                break
-
         elif search_term in term:
             contains.append(el[0])
-
         else:
             jaro_winkler[el[0]] = get_jaro_distance(search_term, term, winkler=True)
 
