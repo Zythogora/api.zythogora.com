@@ -18,8 +18,8 @@ class Beer(BaseModel):
     style: int
     substyle: int = None
     abv: float
-    ibu: int
-    color: int
+    ibu: int = None
+    color: int = None
 
 @router.post("/beers", tags=["beers"])
 async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(get_api_key)):
