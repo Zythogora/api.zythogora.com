@@ -141,7 +141,7 @@ async def get_beer_average_score(beer_id: int, api_key : APIKey = Depends(get_ap
             raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
 
         cursor.execute("""
-            SELECT AVG(score) FROM Ratings
+            SELECT AVG(score), COUNT(id) FROM Ratings
             WHERE beer=%s
         """, (beer_id,))
         query_ratings = cursor.fetchone()
@@ -151,7 +151,8 @@ async def get_beer_average_score(beer_id: int, api_key : APIKey = Depends(get_ap
 
         return {
             "id": beer_id,
-            "averageScore": query_ratings[0]
+            "averageScore": query_ratings[0],
+            "reviews": query_ratings[1]
         }
 
 
