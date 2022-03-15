@@ -71,6 +71,7 @@ async def get_brewery_beers(brewery_id: int, api_key : APIKey = Depends(get_api_
             SELECT id
             FROM Beers
             WHERE brewery=%s
+            ORDER BY name ASC
         """, (brewery_id,))
         query_beers = cursor.fetchall()
 
