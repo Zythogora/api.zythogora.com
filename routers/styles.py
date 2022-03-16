@@ -97,57 +97,47 @@ async def add_style(response: Response, style: Style, api_key : APIKey = Depends
 
 
 @router.get("/styles/{style_id}", tags=["styles"])
-async def get_styles(style_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_style(style_id: int, depth: int = -1, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        cursor.execute(
-            "SELECT Styles.id, Styles.name, SubStyles.id AS substyle_id, SubStyles.name AS substyle_name " +
-            "FROM Styles " +
-            "LEFT JOIN SubStyles ON SubStyles.style = Styles.id " +
-            "WHERE Styles.id=%s " +
-            "ORDER BY Styles.id"
-        , (style_id,))
-        query_styles = cursor.fetchall()
-
-        if not query_styles:
-            raise HTTPException(status_code=404, detail="The style you requested does not exist.")
-
-        styles = []
-        for row in query_styles:
-            styles.append({
-                "id": row[0],
-                "name": row[1],
-                "substyle": {
-                    "id": row[2],
-                    "name": row[3]
-                }
-            })
-        return styles
-
-
-
-@router.get("/styles/{style_id}/{substyle_id}/", tags=["styles"])
-async def get_style(style_id: int, substyle_id: int, api_key : APIKey = Depends(get_api_key)):
-    with connection.cursor(prepared=True) as cursor:
-        cursor.execute(
-            "SELECT Styles.id, Styles.name, SubStyles.id AS substyle_id, SubStyles.name AS substyle_name " +
-            "FROM Styles " +
-            "LEFT JOIN SubStyles ON SubStyles.style = Styles.id " +
-            "WHERE Styles.id=%s AND SubStyles.id=%s " +
-            "ORDER BY Styles.id"
-        , (style_id, substyle_id,))
+        cursor.execute("""
+            SELECT id, name, parent
+            FROM Styles
+            WHERE id=%s
+        """, (style_id, ))
         query_styles = cursor.fetchone()
 
         if not query_styles:
             raise HTTPException(status_code=404, detail="The style you requested does not exist.")
 
+        parent = None
+        if depth != 0:
+            if len(query_styles) > 2 and query_styles[2]:
+                parent = await get_style(query_styles[2], depth - 1, api_key)
+
         return {
             "id": query_styles[0],
             "name": query_styles[1],
-            "substyle": {
-                "id": query_styles[2],
-                "name": query_styles[3]
-            }
+            "parent": parent
         }
+
+
+
+@router.get("/styles", tags=["styles"])
+async def get_styles(api_key : APIKey = Depends(get_api_key)):
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT id
+            FROM Styles
+            ORDER BY name
+        """)
+        query_styles = cursor.fetchall()
+
+        res = [ ]
+        for el in query_styles:
+            data = await get_style(el[0], api_key=api_key)
+            res.append(data)
+
+        return res
 
 
 
