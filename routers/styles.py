@@ -144,33 +144,14 @@ async def get_styles(api_key : APIKey = Depends(get_api_key)):
 @router.get("/styles/search/{style_name}", tags=["styles"])
 async def search_style(style_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        cursor.execute("""
-            SELECT
-                Styles.id      AS id,
-                Styles.name    AS name,
-                SubStyles.id   AS substyle_id,
-                SubStyles.name AS substyle_name
-            FROM Styles
-            LEFT JOIN SubStyles ON Styles.id = SubStyles.style
-        """)
+        cursor.execute("SELECT id, name FROM Styles")
         query_styles = cursor.fetchall()
 
-        styles_list = [ ]
-        for row in query_styles:
-            styles_list.append((
-                (row[0], row[2]),
-                row[3] + " " + row[1] if row[2] else row[1]
-            ))
-
-        data = await search(style_name, styles_list, count, page)
+        style_ids = await search(style_name, query_styles, count, page)
 
         res = [ ]
-        for el in data:
-            if el[1]:
-                style = await get_style(el[0], el[1], api_key)
-            else:
-                style = (await get_styles(el[0], api_key))[0]
-                style["substyle"] = None
-            res.append(style)
+        for i in style_ids:
+            data = await get_style(i, api_key=api_key)
+            res.append(data)
 
         return res

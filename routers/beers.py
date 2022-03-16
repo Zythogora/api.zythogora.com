@@ -16,7 +16,6 @@ class Beer(BaseModel):
     name: str
     brewery: int
     style: int
-    substyle: int = None
     abv: float
     ibu: int = None
     color: int = None
@@ -32,35 +31,19 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
             response.status_code = status.HTTP_409_CONFLICT
 
         else:
-            if beer.substyle:
-                cursor.execute(
-                    "INSERT INTO Beers " +
-                    "(name, brewery, style, sub_style, abv, ibu, color, added_by)" +
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-                , (
-                    beer.name,
-                    beer.brewery,
-                    beer.style,
-                    beer.substyle,
-                    beer.abv,
-                    beer.ibu,
-                    beer.color,
-                    api_key["user"]
-                ))
-            else:
-                cursor.execute(
-                    "INSERT INTO Beers " +
-                    "(name, brewery, style, abv, ibu, color, added_by)" +
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                , (
-                    beer.name,
-                    beer.brewery,
-                    beer.style,
-                    beer.abv,
-                    beer.ibu,
-                    beer.color,
-                    api_key["user"]
-                ))
+            cursor.execute("""
+                INSERT INTO Beers
+                (name, brewery, style, abv, ibu, color, added_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                beer.name,
+                beer.brewery,
+                beer.style,
+                beer.abv,
+                beer.ibu,
+                beer.color,
+                api_key["user"]
+            ))
             connection.commit()
             beer_id = cursor.lastrowid
 
@@ -72,7 +55,7 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
 async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
-            SELECT id, name, brewery, style, sub_style, abv, ibu, color
+            SELECT id, name, brewery, style, abv, ibu, color
             FROM Beers
             WHERE id=%s
         """, (beer_id,))
@@ -83,14 +66,10 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
 
         brewery = await r_breweries.get_brewery(query_beers[2], api_key)
 
-        if query_beers[4]:
-            style = await r_styles.get_style(query_beers[3], query_beers[4], api_key)
-        else:
-            style = (await r_styles.get_styles(query_beers[3], api_key))[0]
-            style["substyle"] = None
+        style = await r_styles.get_style(query_beers[3], api_key=api_key)
 
-        if query_beers[7]:
-            color = await r_colors.get_color(query_beers[7], api_key)
+        if query_beers[6]:
+            color = await r_colors.get_color(query_beers[6], api_key)
         else:
             color = None
 
@@ -99,8 +78,8 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
             "name": query_beers[1],
             "brewery": brewery,
             "style": style,
-            "abv": query_beers[5],
-            "ibu": query_beers[6],
+            "abv": query_beers[4],
+            "ibu": query_beers[5],
             "color": color
         }
 
