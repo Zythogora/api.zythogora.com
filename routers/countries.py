@@ -37,9 +37,6 @@ async def get_countries(api_key : APIKey = Depends(get_api_key)):
         """)
         query_countries = cursor.fetchall()
 
-        if not query_countries:
-            raise HTTPException(status_code=404, detail="The country you requested does not exist.")
-
         res = [ ]
         for el in query_countries:
             data = await get_country(el[0], api_key)

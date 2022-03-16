@@ -36,9 +36,6 @@ async def get_servings(api_key : APIKey = Depends(get_api_key)):
         """)
         query_servings = cursor.fetchall()
 
-        if not query_servings:
-            raise HTTPException(status_code=404, detail="The serving type you requested does not exist.")
-
         res = [ ]
         for el in query_servings:
             data = await get_serving(el[0], api_key)

@@ -75,9 +75,6 @@ async def get_brewery_beers(brewery_id: int, api_key : APIKey = Depends(get_api_
         """, (brewery_id,))
         query_beers = cursor.fetchall()
 
-        if not query_beers:
-            raise HTTPException(status_code=404, detail="The brewery you requested does not have any beer registered yet.")
-
         res = [ ]
         for el in query_beers:
             beer = await r_beers.get_beer(el[0], api_key)

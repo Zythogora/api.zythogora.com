@@ -36,9 +36,6 @@ async def get_colors(api_key : APIKey = Depends(get_api_key)):
         """)
         query_colors = cursor.fetchall()
 
-        if not query_colors:
-            raise HTTPException(status_code=404, detail="The color you requested does not exist.")
-
         res = [ ]
         for el in query_colors:
             data = await get_color(el[0], api_key)
