@@ -6,6 +6,7 @@ import jwt
 import os
 from pydantic import BaseModel
 import time
+import re
 
 import routers.ratings as r_ratings
 
@@ -62,12 +63,38 @@ async def register(register: Register, api_key : APIKey = Depends(get_api_key)):
         cursor.execute("""
             SELECT id
             FROM Users
-            WHERE username=%s OR email=%s
-        """, (register.username, register.email))
-        query_users = cursor.fetchone()
+            WHERE username=%s
+        """, (register.username, ))
+        if cursor.fetchone():
+            raise HTTPException(status_code=409, detail="Username already in use")
 
-        if query_users:
-            raise HTTPException(status_code=409, detail="This username / email is already in use")
+        username_pattern = re.compile("^[a-zA-Z0-9_]+$")
+        if username_pattern.match(register.username) is None:
+            raise HTTPException(status_code=422, detail="Username contains forbidden characters")
+
+        cursor.execute("""
+            SELECT id
+            FROM Users
+            WHERE email=%s
+        """, (register.email, ))
+        if cursor.fetchone():
+            raise HTTPException(status_code=409, detail="Email already in use")
+
+        email_pattern = re.compile("^([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+$")
+        if email_pattern.match(register.email) is None:
+            raise HTTPException(status_code=422, detail="Email format unknown")
+
+        password_pattern = re.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})")
+        if password_pattern.match(register.password) is None:
+            raise HTTPException(status_code=422, detail="Password is not strong enough")
+
+        cursor.execute("""
+            SELECT id
+            FROM Countries
+            WHERE id=%s
+        """, (register.nationality, ))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=422, detail="Country unknown")
 
         cursor.execute("""
             INSERT INTO Users
