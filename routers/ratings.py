@@ -25,6 +25,25 @@ class Rating(BaseModel):
 async def add_rating(response: Response, rating: Rating, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
+            SELECT id
+            FROM Beers
+            WHERE id=%s
+        """, (rating.beer, ))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=422, detail="Beer unknown")
+
+        if rating.score < 0 or rating.score > 10:
+            raise HTTPException(status_code=422, detail="Score value invalid")
+
+        cursor.execute("""
+            SELECT id
+            FROM Servings
+            WHERE id=%s
+        """, (rating.serving, ))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=422, detail="Serving unknown")
+
+        cursor.execute("""
             INSERT INTO Ratings (
                 user, beer,
                 appearance, smell, taste, aftertaste, score,
