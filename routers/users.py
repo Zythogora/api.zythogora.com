@@ -28,12 +28,12 @@ async def login(login: Login, api_key : APIKey = Depends(get_api_key)):
         query_users = cursor.fetchone()
 
         if not query_users:
-            raise HTTPException(status_code=401, detail="Unauthorized")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
         try:
             PasswordHasher().verify(query_users[2], login.password)
         except:
-            raise HTTPException(status_code=401, detail="Unauthorized")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
         now = int(time.time())
         token = jwt.encode(
