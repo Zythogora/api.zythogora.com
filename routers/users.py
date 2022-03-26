@@ -158,7 +158,7 @@ async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/users/{user}/ratings", tags=["users"])
-async def get_user_ratings(user: str, api_key : APIKey = Depends(get_api_key)):
+async def get_user_ratings(user: str, count: int = 10, page: int = 1, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
@@ -178,10 +178,12 @@ async def get_user_ratings(user: str, api_key : APIKey = Depends(get_api_key)):
             raise HTTPException(status_code=404, detail="The user you requested does not exist.")
 
         cursor.execute("""
-            SELECT id FROM Ratings
+            SELECT id
+            FROM Ratings
             WHERE user=%s
             ORDER BY date DESC
-        """, (query_users[0],))
+            LIMIT %s, %s
+        """, (query_users[0], (page - 1) * count, count))
         query_ratings = cursor.fetchall()
 
         res = [ ]
