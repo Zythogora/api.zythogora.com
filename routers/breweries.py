@@ -26,6 +26,14 @@ async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = D
 
         else:
             cursor.execute("""
+                SELECT id
+                FROM Countries
+                WHERE id=%s
+            """, (register.nationality, ))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=422, detail="Country unknown")
+
+            cursor.execute("""
                 INSERT INTO Breweries
                 (name, country, added_by)
                 VALUES (%s, %s, %s)
