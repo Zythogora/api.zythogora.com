@@ -102,13 +102,20 @@ async def register(register: Register, api_key : APIKey = Depends(get_api_key)):
 @router.get("/users/{user}", tags=["users"])
 async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        query = "Users.uuid" if "-" in user else "Users.username"
-        cursor.execute("""
-            SELECT Users.uuid, Users.username, Users.nationality, COUNT(Ratings.id) AS ratings
-            FROM Ratings
-            JOIN Users ON Ratings.user=Users.uuid
-            WHERE %s=%s
-        """, (query, user))
+        if "-" in user:
+            cursor.execute("""
+                SELECT Users.uuid, Users.username, Users.nationality, COUNT(Ratings.id) AS ratings
+                FROM Ratings
+                JOIN Users ON Ratings.user=Users.uuid
+                WHERE Users.uuid=%s
+            """, (user, ))
+        else:
+            cursor.execute("""
+                SELECT Users.uuid, Users.username, Users.nationality, COUNT(Ratings.id) AS ratings
+                FROM Ratings
+                JOIN Users ON Ratings.user=Users.uuid
+                WHERE Users.username=%s
+            """, (user, ))
         query_users = cursor.fetchone()
 
         if not query_users:
@@ -126,12 +133,18 @@ async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
 @router.get("/users/{user}/ratings", tags=["users"])
 async def get_user_ratings(user: str, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        query = "uuid" if "-" in user else "username"
-        cursor.execute("""
-            SELECT uuid
-            FROM Users
-            WHERE %s=%s
-        """, (query, user))
+        if "-" in user:
+            cursor.execute("""
+                SELECT uuid
+                FROM Users
+                WHERE uuid=%s
+            """, (user, ))
+        else:
+            cursor.execute("""
+                SELECT uuid
+                FROM Users
+                WHERE username=%s
+            """, (user, ))
         query_users = cursor.fetchone()
 
         if not query_users:
