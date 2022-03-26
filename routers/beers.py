@@ -23,7 +23,11 @@ class Beer(BaseModel):
 @router.post("/beers", tags=["beers"])
 async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        cursor.execute("SELECT id FROM Beers WHERE name=%s AND brewery=%s", (beer.name, beer.brewery ))
+        cursor.execute("""
+            SELECT id
+            FROM Beers
+            WHERE name=%s AND brewery=%s
+        """, (beer.name, beer.brewery ))
         query_beers = cursor.fetchone()
 
         if query_beers:
@@ -31,6 +35,36 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
             response.status_code = status.HTTP_409_CONFLICT
 
         else:
+            cursor.execute("""
+                SELECT id
+                FROM Breweries
+                WHERE id=%s
+            """, (rating.brewery, ))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=422, detail="Brewery unknown")
+
+            cursor.execute("""
+                SELECT id
+                FROM Styles
+                WHERE id=%s
+            """, (rating.style, ))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=422, detail="Style unknown")
+
+            if rating.abv < 0 or rating.abv > 100:
+                raise HTTPException(status_code=422, detail="ABV value invalid")
+
+            if rating.ibu < 0 or rating.ibu > 100:
+                raise HTTPException(status_code=422, detail="IBU value invalid")
+
+            cursor.execute("""
+                SELECT id
+                FROM Colors
+                WHERE id=%s
+            """, (rating.color, ))
+            if not cursor.fetchone():
+                raise HTTPException(status_code=422, detail="Color unknown")
+
             cursor.execute("""
                 INSERT INTO Beers
                 (name, brewery, style, abv, ibu, color, added_by)
