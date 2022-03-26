@@ -99,15 +99,16 @@ async def register(register: Register, api_key : APIKey = Depends(get_api_key)):
 
 
 
-@router.get("/users/{user_uuid}", tags=["users"])
-async def get_user(user_uuid: str, api_key : APIKey = Depends(get_api_key)):
+@router.get("/users/{user}", tags=["users"])
+async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
+        query = "Users.uuid" if "-" in user else "Users.username"
         cursor.execute("""
             SELECT Users.uuid, Users.username, Users.nationality, COUNT(Ratings.id) AS ratings
             FROM Ratings
             JOIN Users ON Ratings.user=Users.uuid
-            WHERE Users.uuid=%s
-        """, (user_uuid,))
+            WHERE %s=%s
+        """, (query, user))
         query_users = cursor.fetchone()
 
         if not query_users:
@@ -122,10 +123,15 @@ async def get_user(user_uuid: str, api_key : APIKey = Depends(get_api_key)):
 
 
 
-@router.get("/users/{user_uuid}/ratings", tags=["users"])
-async def get_user_ratings(user_uuid: str, api_key : APIKey = Depends(get_api_key)):
+@router.get("/users/{user}/ratings", tags=["users"])
+async def get_user_ratings(user: str, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        cursor.execute("SELECT uuid FROM Users WHERE uuid=%s", (user_uuid,))
+        query = "uuid" if "-" in user else "username"
+        cursor.execute("""
+            SELECT uuid
+            FROM Users
+            WHERE %s=%s
+        """, (query, user))
         query_users = cursor.fetchone()
 
         if not query_users:
@@ -135,7 +141,7 @@ async def get_user_ratings(user_uuid: str, api_key : APIKey = Depends(get_api_ke
             SELECT id FROM Ratings
             WHERE user=%s
             ORDER BY date DESC
-        """, (user_uuid,))
+        """, (query_users[0],))
         query_ratings = cursor.fetchall()
 
         res = [ ]
@@ -150,7 +156,10 @@ async def get_user_ratings(user_uuid: str, api_key : APIKey = Depends(get_api_ke
 @router.get("/users/search/{username}", tags=["users"])
 async def search_user(username: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        cursor.execute("SELECT uuid, username FROM Users")
+        cursor.execute("""
+            SELECT uuid, username
+            FROM Users
+        """)
         query_users = cursor.fetchall()
 
         user_ids = await search(username, query_users, count, page)
