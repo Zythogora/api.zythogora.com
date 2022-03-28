@@ -39,7 +39,7 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
                 SELECT id
                 FROM Breweries
                 WHERE id=%s
-            """, (rating.brewery, ))
+            """, (beer.brewery, ))
             if not cursor.fetchone():
                 raise HTTPException(status_code=422, detail="Brewery unknown")
 
@@ -47,21 +47,21 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
                 SELECT id
                 FROM Styles
                 WHERE id=%s
-            """, (rating.style, ))
+            """, (beer.style, ))
             if not cursor.fetchone():
                 raise HTTPException(status_code=422, detail="Style unknown")
 
-            if rating.abv < 0 or rating.abv > 100:
+            if beer.abv < 0 or beer.abv > 100:
                 raise HTTPException(status_code=422, detail="ABV value invalid")
 
-            if rating.ibu < 0 or rating.ibu > 100:
+            if beer.ibu < 0 or beer.ibu > 100:
                 raise HTTPException(status_code=422, detail="IBU value invalid")
 
             cursor.execute("""
                 SELECT id
                 FROM Colors
                 WHERE id=%s
-            """, (rating.color, ))
+            """, (beer.color, ))
             if not cursor.fetchone():
                 raise HTTPException(status_code=422, detail="Color unknown")
 
