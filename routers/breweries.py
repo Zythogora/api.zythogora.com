@@ -29,7 +29,7 @@ async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = D
                 SELECT id
                 FROM Countries
                 WHERE id=%s
-            """, (register.nationality, ))
+            """, (brewery.country, ))
             if not cursor.fetchone():
                 raise HTTPException(status_code=422, detail="Country unknown")
 
