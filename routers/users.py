@@ -195,6 +195,61 @@ async def get_user_ratings(user: str, count: int = 10, page: int = 1, api_key : 
 
 
 
+@router.get("/users/{user}/ratings/since/{date}", tags=["users"])
+async def get_user_ratings_since(user: str, date: str, api_key : APIKey = Depends(get_api_key)):
+    with connection.cursor(prepared=True) as cursor:
+        if "-" in user:
+            cursor.execute("""
+                SELECT uuid
+                FROM Users
+                WHERE uuid=%s
+            """, (user, ))
+        else:
+            cursor.execute("""
+                SELECT uuid
+                FROM Users
+                WHERE username=%s
+            """, (user, ))
+        query_users = cursor.fetchone()
+
+        if not query_users:
+            raise HTTPException(status_code=404, detail="The user you requested does not exist.")
+
+        if not date[-1] in [ "H", "D", "W", "M", "Y" ]:
+            raise HTTPException(status_code=422, detail="Unknown date type. Supported types are H (hours), D (days), W (weeks), M (months) and Y (years).")
+
+        date_type = { "H": "HOUR", "D": "DAY", "W": "WEEK", "M": "MONTH", "Y": "YEAR" }[date[-1]]
+
+        if not date[:-1].isnumeric():
+            raise HTTPException(status_code=422, detail="The duration must be a number.")
+
+        date_interval = int(date[:-1])
+        if date_interval <= 0:
+            raise HTTPException(status_code=422, detail="Invalid duration.")
+        
+        print(date_type, date_interval)
+
+        cursor.execute(f"""
+            SELECT id
+            FROM Ratings
+            WHERE
+                user=%s AND
+                date BETWEEN
+                    DATE_SUB(NOW(), INTERVAL {date_interval} {date_type})
+                    AND NOW()
+            ORDER BY date DESC
+        """, (query_users[0], ))
+        query_ratings = cursor.fetchall()
+
+        res = [ ]
+        for row in query_ratings:
+            rating = await r_ratings.get_rating(row[0], api_key)
+            res.append(rating)
+
+        return res
+
+
+
 @router.get("/users/search/{username}", tags=["users"])
 async def search_user(username: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
