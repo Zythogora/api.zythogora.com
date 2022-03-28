@@ -35,13 +35,14 @@ async def add_rating(response: Response, rating: Rating, api_key : APIKey = Depe
         if rating.score < 0 or rating.score > 10:
             raise HTTPException(status_code=422, detail="Score value invalid")
 
-        cursor.execute("""
-            SELECT id
-            FROM Servings
-            WHERE id=%s
-        """, (rating.serving, ))
-        if not cursor.fetchone():
-            raise HTTPException(status_code=422, detail="Serving unknown")
+        # FIXME: add serving back
+        # cursor.execute("""
+        #     SELECT id
+        #     FROM Servings
+        #     WHERE id=%s
+        # """, (rating.serving, ))
+        # if not cursor.fetchone():
+        #     raise HTTPException(status_code=422, detail="Serving unknown")
 
         cursor.execute("""
             INSERT INTO Ratings (
