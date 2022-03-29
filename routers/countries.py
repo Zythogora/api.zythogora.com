@@ -10,7 +10,7 @@ router = APIRouter()
 async def get_country_v2(country_id: int, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
-            SELECT id, name, code, phone
+            SELECT id, name, code, flag, phone
             FROM Countries_v2
             WHERE id=%s
         """, (country_id,))
@@ -23,7 +23,8 @@ async def get_country_v2(country_id: int, api_key : APIKey = Depends(get_api_key
             "id": query_countries[0],
             "name": query_countries[1],
             "code": query_countries[2],
-            "phone": query_countries[3],
+            "flag": query_countries[3],
+            "phone": query_countries[4],
         }
 
 
