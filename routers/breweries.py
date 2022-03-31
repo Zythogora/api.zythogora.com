@@ -17,7 +17,11 @@ class Brewery(BaseModel):
 @router.post("/breweries", tags=["breweries"])
 async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
-        cursor.execute("SELECT id FROM Breweries WHERE name=%s", (brewery.name, ))
+        cursor.execute("""
+            SELECT id
+            FROM Breweries
+            WHERE name=%s AND country=%s
+        """, (brewery.name, brewery.country))
         query_breweries = cursor.fetchone()
 
         if query_breweries:
