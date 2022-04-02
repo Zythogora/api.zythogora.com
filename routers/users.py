@@ -131,28 +131,33 @@ async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
-                SELECT Users.uuid, Users.username, Users.nationality, COUNT(Ratings.id) AS ratings
-                FROM Ratings
-                JOIN Users ON Ratings.user=Users.uuid
-                WHERE Users.uuid=%s
+                SELECT uuid, username, nationality
+                FROM Users
+                WHERE uuid=%s
             """, (user, ))
         else:
             cursor.execute("""
-                SELECT Users.uuid, Users.username, Users.nationality, COUNT(Ratings.id) AS ratings
-                FROM Ratings
-                JOIN Users ON Ratings.user=Users.uuid
-                WHERE Users.username=%s
+                SELECT uuid, username, nationality
+                FROM Users
+                WHERE username=%s
             """, (user, ))
         query_users = cursor.fetchone()
 
-        if not query_users or not query_users[0]:
+        if not query_users:
             raise HTTPException(status_code=404, detail="The user you requested does not exist.")
+
+        cursor.execute("""
+            SELECT COUNT(Ratings.id)
+            FROM Ratings
+            WHERE user=%s
+        """, (query_users[0], ))
+        query_ratings = cursor.fetchone()
 
         return {
             "id": query_users[0],
             "username": query_users[1],
             "nationality": query_users[2],
-            "ratings": query_users[3]
+            "ratings": query_ratings[0]
         }
 
 
