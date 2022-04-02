@@ -138,7 +138,7 @@ async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
             """, (user, ))
         else:
             cursor.execute("""
-                SELECT Users.uuid, Users.username, Users.nationality AS ratings
+                SELECT Users.uuid, Users.username, Users.nationality, COUNT(Ratings.id) AS ratings
                 FROM Ratings
                 JOIN Users ON Ratings.user=Users.uuid
                 WHERE Users.username=%s
