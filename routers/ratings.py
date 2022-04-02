@@ -17,7 +17,7 @@ class Rating(BaseModel):
     smell: int
     taste: int
     aftertaste: int
-    score: int
+    score: float
     serving: int
     comment: str = None
 
