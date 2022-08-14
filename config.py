@@ -6,6 +6,8 @@ import jwt
 import mysql.connector as database
 import os
 from pyjarowinkler.distance import get_jaro_distance
+import random
+import string
 
 
 
@@ -29,8 +31,10 @@ async def get_api_key(request: Request, key: str = Security(key)):
     # No Auth
 
     no_auth = [
-        [ "POST", "/users/login" ],
-        [ "POST", "/users/register" ],
+        [ "POST", "/account/login" ],
+        [ "POST", "/account/register" ],
+        [ "POST", "/account/recover" ],
+        [ "POST", "/account/resetPassword" ],
     ]
 
     if request.method == "GET":
@@ -133,3 +137,12 @@ async def search(search_term: str, term_query, count: int = 10, page: int = 1):
     results = (res + contains + jaro_winkler)[(page - 1) * count : page * count]
 
     return results
+
+
+
+def get_random_string(length):
+    return ''.join(random.SystemRandom().choice(
+        string.ascii_lowercase +
+        string.ascii_uppercase +
+        string.digits
+    ) for _ in range(length))

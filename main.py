@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routers import beers, breweries, colors, countries, ratings, servings, styles, top, users
+from routers import account, beers, breweries, colors, countries, ratings, servings, styles, top, users
 
 description = """
 The API behind [Zythogora](https://zythogora.com).
@@ -14,6 +14,7 @@ app = FastAPI(
 )
 
 
+app.include_router(account.router)
 app.include_router(beers.router)
 app.include_router(breweries.router)
 app.include_router(colors.router)
