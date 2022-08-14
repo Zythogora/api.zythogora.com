@@ -75,7 +75,7 @@ async def add_rating(response: Response, rating: Rating, api_key : APIKey = Depe
 
 
 @router.get("/ratings/{rating_id}", tags=["ratings"])
-async def get_rating(rating_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_rating(rating_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT
@@ -90,11 +90,11 @@ async def get_rating(rating_id: int, api_key : APIKey = Depends(get_api_key)):
         if not query_ratings:
             raise HTTPException(status_code=404, detail="The rating you requested does not exist.")
 
-        user = await r_users.get_user(query_ratings[1], api_key)
-        beer = await r_beers.get_beer(query_ratings[2], api_key)
+        user = await r_users.get_user(query_ratings[1])
+        beer = await r_beers.get_beer(query_ratings[2])
 
         if query_ratings[8]:
-            serving = await r_servings.get_serving(query_ratings[8], api_key)
+            serving = await r_servings.get_serving(query_ratings[8])
         else:
             serving = None
 

@@ -1,13 +1,12 @@
-from config import connection, get_api_key, search
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security.api_key import APIKey
+from config import connection, search
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
 
 
 @router.get("/countries/{country_id}", tags=["countries"])
-async def get_country(country_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_country(country_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, code, flag, phone
@@ -30,7 +29,7 @@ async def get_country(country_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/countries", tags=["countries"])
-async def get_countries(api_key : APIKey = Depends(get_api_key)):
+async def get_countries():
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -41,7 +40,7 @@ async def get_countries(api_key : APIKey = Depends(get_api_key)):
 
         res = [ ]
         for el in query_countries:
-            data = await get_country(el[0], api_key)
+            data = await get_country(el[0])
             res.append(data)
 
         return res
@@ -49,7 +48,7 @@ async def get_countries(api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/countries/search/{country_name}", tags=["countries"])
-async def search_country(country_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
+async def search_country(country_name: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Countries")
         query_countries = cursor.fetchall()
@@ -58,7 +57,7 @@ async def search_country(country_name: str, count: int = 10, page: int = 1, api_
 
         res = [ ]
         for i in country_ids:
-            data = await get_country(i, api_key)
+            data = await get_country(i)
             res.append(data)
 
         return res

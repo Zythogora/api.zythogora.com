@@ -1,13 +1,12 @@
-from config import connection, get_api_key, search
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security.api_key import APIKey
+from config import connection, search
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
 
 
 @router.get("/colors/{color_id}", tags=["colors"])
-async def get_color(color_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_color(color_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, color
@@ -28,7 +27,7 @@ async def get_color(color_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/colors", tags=["colors"])
-async def get_colors(api_key : APIKey = Depends(get_api_key)):
+async def get_colors():
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -38,7 +37,7 @@ async def get_colors(api_key : APIKey = Depends(get_api_key)):
 
         res = [ ]
         for el in query_colors:
-            data = await get_color(el[0], api_key)
+            data = await get_color(el[0])
             res.append(data)
 
         return res
@@ -46,7 +45,7 @@ async def get_colors(api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/colors/search/{color_name}", tags=["colors"])
-async def search_color(color_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
+async def search_color(color_name: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Colors")
         query_colors = cursor.fetchall()
@@ -55,7 +54,7 @@ async def search_color(color_name: str, count: int = 10, page: int = 1, api_key:
 
         res = [ ]
         for i in color_ids:
-            data = await get_color(i, api_key)
+            data = await get_color(i)
             res.append(data)
 
         return res

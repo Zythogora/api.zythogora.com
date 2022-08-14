@@ -49,12 +49,12 @@ async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = D
             connection.commit()
             brewery_id = cursor.lastrowid
 
-        return await get_brewery(brewery_id, api_key)
+        return await get_brewery(brewery_id)
 
 
 
 @router.get("/breweries/{brewery_id}", tags=["breweries"])
-async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_brewery(brewery_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, country
@@ -66,7 +66,7 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
         if not query_breweries:
             raise HTTPException(status_code=404, detail="The brewery you requested does not exist.")
 
-        country = await r_countries.get_country(query_breweries[2], api_key)
+        country = await r_countries.get_country(query_breweries[2])
 
         return {
             "id": query_breweries[0],
@@ -77,7 +77,7 @@ async def get_brewery(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/breweries/{brewery_id}/beers", tags=["breweries"])
-async def get_brewery_beers(brewery_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_brewery_beers(brewery_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -89,14 +89,14 @@ async def get_brewery_beers(brewery_id: int, api_key : APIKey = Depends(get_api_
 
         res = [ ]
         for el in query_beers:
-            beer = await r_beers.get_beer(el[0], api_key)
+            beer = await r_beers.get_beer(el[0])
             res.append(beer)
         return res
 
 
 
 @router.get("/breweries/search/{brewery_name}", tags=["breweries"])
-async def search_brewery(brewery_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
+async def search_brewery(brewery_name: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT Breweries.id, Breweries.name, SUM(Sub.popularity) AS popularity FROM (
@@ -113,7 +113,7 @@ async def search_brewery(brewery_name: str, count: int = 10, page: int = 1, api_
 
         res = [ ]
         for i in brewery_ids:
-            data = await get_brewery(i, api_key)
+            data = await get_brewery(i)
             res.append(data)
 
         return res

@@ -1,9 +1,8 @@
 from argon2 import PasswordHasher
-from config import connection, get_api_key, get_random_string, search
+from config import connection, get_random_string, search
 import datetime
 from email_utils import send_email
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security.api_key import APIKey
+from fastapi import APIRouter, HTTPException
 import jwt
 import os
 from pydantic import BaseModel
@@ -23,7 +22,7 @@ class Login(BaseModel):
     password: str
 
 @router.post("/users/login", tags=["users"])
-async def login(login: Login, api_key : APIKey = Depends(get_api_key)):
+async def login(login: Login):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT uuid, username, password_hash
@@ -62,7 +61,7 @@ class Register(BaseModel):
     nationality: int
 
 @router.post("/users/register", tags=["users"])
-async def register(register: Register, api_key : APIKey = Depends(get_api_key)):
+async def register(register: Register):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -135,7 +134,7 @@ class RecoverAccount(BaseModel):
     email: str
 
 @router.post("/account/recover", tags=["account"])
-async def recover_account(recover_account: RecoverAccount, api_key : APIKey = Depends(get_api_key)):
+async def recover_account(recover_account: RecoverAccount):
     with connection.cursor(prepared=True) as cursor:
         if email_pattern.match(recover_account.email) is None:
             raise HTTPException(status_code=422, detail="Email format unknown")
@@ -208,7 +207,7 @@ class ResetPassword(BaseModel):
     password: str
 
 @router.post("/account/resetPassword", tags=["account"])
-async def reset_password(reset_password: ResetPassword, api_key : APIKey = Depends(get_api_key)):
+async def reset_password(reset_password: ResetPassword):
     with connection.cursor(prepared=True) as cursor:
         if alphanumeric_pattern.match(reset_password.password_reset_key) is None or len(reset_password.password_reset_key) != 64:
             raise HTTPException(status_code=422, detail="Invalid key")

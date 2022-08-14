@@ -1,13 +1,12 @@
-from config import connection, get_api_key, search
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security.api_key import APIKey
+from config import connection, search
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 
 
 
 @router.get("/servings/{serving_id}", tags=["servings"])
-async def get_serving(serving_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_serving(serving_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name
@@ -27,7 +26,7 @@ async def get_serving(serving_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/servings", tags=["servings"])
-async def get_servings(api_key : APIKey = Depends(get_api_key)):
+async def get_servings():
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -38,7 +37,7 @@ async def get_servings(api_key : APIKey = Depends(get_api_key)):
 
         res = [ ]
         for el in query_servings:
-            data = await get_serving(el[0], api_key)
+            data = await get_serving(el[0])
             res.append(data)
 
         return res
@@ -46,7 +45,7 @@ async def get_servings(api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/servings/search/{serving_name}", tags=["servings"])
-async def search_serving(serving_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
+async def search_serving(serving_name: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Servings")
         query_servings = cursor.fetchall()
@@ -55,7 +54,7 @@ async def search_serving(serving_name: str, count: int = 10, page: int = 1, api_
 
         res = [ ]
         for i in serving_ids:
-            data = await get_serving(i, api_key)
+            data = await get_serving(i)
             res.append(data)
 
         return res

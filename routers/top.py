@@ -1,7 +1,6 @@
 from argon2 import PasswordHasher
-from config import connection, get_api_key, search
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security.api_key import APIKey
+from config import connection, search
+from fastapi import APIRouter, HTTPException
 import jwt
 import os
 from pydantic import BaseModel
@@ -16,7 +15,7 @@ router = APIRouter()
 
 
 @router.get("/top/beers", tags=["top"])
-async def get_top_beers(count: int = 10, page: int = 1, api_key : APIKey = Depends(get_api_key)):
+async def get_top_beers(count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT
@@ -75,7 +74,7 @@ async def get_top_beers(count: int = 10, page: int = 1, api_key : APIKey = Depen
 
         res = [ ]
         for row in query_beers:
-            beer = await r_beers.get_beer(row[0], api_key)
+            beer = await r_beers.get_beer(row[0])
             res.append(beer)
 
         return res
@@ -83,7 +82,7 @@ async def get_top_beers(count: int = 10, page: int = 1, api_key : APIKey = Depen
 
 
 @router.get("/top/beers/{user}", tags=["top"])
-async def get_user_top_beers(user: str, count: int = 10, page: int = 1, api_key : APIKey = Depends(get_api_key)):
+async def get_user_top_beers(user: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
@@ -167,7 +166,7 @@ async def get_user_top_beers(user: str, count: int = 10, page: int = 1, api_key 
 
         res = [ ]
         for row in query_beers:
-            beer = await r_beers.get_beer(row[0], api_key)
+            beer = await r_beers.get_beer(row[0])
             res.append(beer)
 
         return res
@@ -175,7 +174,7 @@ async def get_user_top_beers(user: str, count: int = 10, page: int = 1, api_key 
 
 
 @router.get("/top/breweries", tags=["top"])
-async def get_top_breweries(count: int = 10, page: int = 1, api_key : APIKey = Depends(get_api_key)):
+async def get_top_breweries(count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT
@@ -244,7 +243,7 @@ async def get_top_breweries(count: int = 10, page: int = 1, api_key : APIKey = D
 
         res = [ ]
         for row in query_breweries:
-            brewery = await r_breweries.get_brewery(row[0], api_key)
+            brewery = await r_breweries.get_brewery(row[0])
             res.append(brewery)
 
         return res
@@ -252,7 +251,7 @@ async def get_top_breweries(count: int = 10, page: int = 1, api_key : APIKey = D
 
 
 @router.get("/top/breweries/{user}", tags=["top"])
-async def get_user_top_breweries(user: str, count: int = 10, page: int = 1, api_key : APIKey = Depends(get_api_key)):
+async def get_user_top_breweries(user: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
@@ -346,7 +345,7 @@ async def get_user_top_breweries(user: str, count: int = 10, page: int = 1, api_
 
         res = [ ]
         for row in query_breweries:
-            brewery = await r_breweries.get_brewery(row[0], api_key)
+            brewery = await r_breweries.get_brewery(row[0])
             res.append(brewery)
 
         return res

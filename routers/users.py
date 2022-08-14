@@ -76,7 +76,7 @@ async def get_user_ratings(user: str, count: int = 10, page: int = 1, api_key : 
 
         res = [ ]
         for row in query_ratings:
-            rating = await r_ratings.get_rating(row[0], api_key)
+            rating = await r_ratings.get_rating(row[0])
             res.append(rating)
 
         return res
@@ -131,7 +131,7 @@ async def get_user_ratings_since(user: str, date: str, api_key : APIKey = Depend
 
         res = [ ]
         for row in query_ratings:
-            rating = await r_ratings.get_rating(row[0], api_key)
+            rating = await r_ratings.get_rating(row[0])
             res.append(rating)
 
         return res
@@ -151,7 +151,7 @@ async def search_user(username: str, count: int = 10, page: int = 1, api_key: AP
 
         res = [ ]
         for i in user_ids:
-            data = await get_user(i, api_key)
+            data = await get_user(i)
             res.append(data)
 
         return res

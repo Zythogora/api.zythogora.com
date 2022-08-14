@@ -97,7 +97,7 @@ async def add_style(response: Response, style: Style, api_key : APIKey = Depends
 
 
 @router.get("/styles/{style_id}", tags=["styles"])
-async def get_style(style_id: int, depth: int = -1, api_key : APIKey = Depends(get_api_key)):
+async def get_style(style_id: int, depth: int = -1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, parent
@@ -112,7 +112,7 @@ async def get_style(style_id: int, depth: int = -1, api_key : APIKey = Depends(g
         parent = None
         if depth != 0:
             if len(query_styles) > 2 and query_styles[2]:
-                parent = await get_style(query_styles[2], depth - 1, api_key)
+                parent = await get_style(query_styles[2], depth - 1)
 
         return {
             "id": query_styles[0],
@@ -123,7 +123,7 @@ async def get_style(style_id: int, depth: int = -1, api_key : APIKey = Depends(g
 
 
 @router.get("/styles", tags=["styles"])
-async def get_styles(api_key : APIKey = Depends(get_api_key)):
+async def get_styles():
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -134,7 +134,7 @@ async def get_styles(api_key : APIKey = Depends(get_api_key)):
 
         res = [ ]
         for el in query_styles:
-            data = await get_style(el[0], api_key=api_key)
+            data = await get_style(el[0])
             res.append(data)
 
         return res
@@ -142,7 +142,7 @@ async def get_styles(api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/styles/search/{style_name}", tags=["styles"])
-async def search_style(style_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
+async def search_style(style_name: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Styles")
         query_styles = cursor.fetchall()
@@ -151,7 +151,7 @@ async def search_style(style_name: str, count: int = 10, page: int = 1, api_key:
 
         res = [ ]
         for i in style_ids:
-            data = await get_style(i, api_key=api_key)
+            data = await get_style(i)
             res.append(data)
 
         return res

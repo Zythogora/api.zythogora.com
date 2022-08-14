@@ -28,21 +28,6 @@ async def get_api_key(request: Request, key: str = Security(key)):
 
     connection.ping(reconnect=True)
 
-    # No Auth
-
-    no_auth = [
-        [ "POST", "/account/login" ],
-        [ "POST", "/account/register" ],
-        [ "POST", "/account/recover" ],
-        [ "POST", "/account/resetPassword" ],
-    ]
-
-    if request.method == "GET":
-        return {}
-
-    if [ request.method, request.url.path ] in no_auth:
-        return {}
-
 
     # JWT Auth
 

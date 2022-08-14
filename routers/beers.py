@@ -81,12 +81,12 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
             connection.commit()
             beer_id = cursor.lastrowid
 
-        return await get_beer(beer_id, api_key)
+        return await get_beer(beer_id)
 
 
 
 @router.get("/beers/{beer_id}", tags=["beers"])
-async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_beer(beer_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, brewery, style, abv, ibu, color
@@ -98,12 +98,12 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
         if not query_beers:
             raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
 
-        brewery = await r_breweries.get_brewery(query_beers[2], api_key)
+        brewery = await r_breweries.get_brewery(query_beers[2])
 
-        style = await r_styles.get_style(query_beers[3], api_key=api_key)
+        style = await r_styles.get_style(query_beers[3])
 
         if query_beers[6]:
-            color = await r_colors.get_color(query_beers[6], api_key)
+            color = await r_colors.get_color(query_beers[6])
         else:
             color = None
 
@@ -120,7 +120,7 @@ async def get_beer(beer_id: int, api_key : APIKey = Depends(get_api_key)):
 
 
 @router.get("/beers/{beer_id}/ratings", tags=["beers"])
-async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_beer_ratings(beer_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
         query_beers = cursor.fetchone()
@@ -137,7 +137,7 @@ async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)
 
         res = [ ]
         for row in query_ratings:
-            rating = await r_ratings.get_rating(row[0], api_key)
+            rating = await r_ratings.get_rating(row[0])
             res.append(rating)
 
         return res
@@ -145,7 +145,7 @@ async def get_beer_ratings(beer_id: int, api_key : APIKey = Depends(get_api_key)
 
 
 @router.get("/beers/{beer_id}/averageScore", tags=["beers"])
-async def get_beer_average_score(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+async def get_beer_average_score(beer_id: int):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
         query_beers = cursor.fetchone()
@@ -171,7 +171,7 @@ async def get_beer_average_score(beer_id: int, api_key : APIKey = Depends(get_ap
 
 
 @router.get("/beers/search/{beer_name}", tags=["beers"])
-async def search_beer(beer_name: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
+async def search_beer(beer_name: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT Beers.id, Beers.name, SUM(Ratings.score) AS popularity FROM Beers
@@ -184,7 +184,7 @@ async def search_beer(beer_name: str, count: int = 10, page: int = 1, api_key: A
 
         res = [ ]
         for i in beer_ids:
-            data = await get_beer(i, api_key)
+            data = await get_beer(i)
             res.append(data)
 
         return res
