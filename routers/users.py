@@ -1,7 +1,6 @@
 from argon2 import PasswordHasher
-from config import connection, get_api_key, search
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security.api_key import APIKey
+from config import connection, search
+from fastapi import APIRouter, HTTPException
 
 import routers.ratings as r_ratings
 
@@ -10,19 +9,19 @@ router = APIRouter()
 
 
 @router.get("/users/{user}", tags=["users"])
-async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
+async def get_user(user: str):
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
                 SELECT uuid, username, nationality
                 FROM Users
-                WHERE uuid=%s
+                WHERE uuid = %s
             """, (user, ))
         else:
             cursor.execute("""
                 SELECT uuid, username, nationality
                 FROM Users
-                WHERE username=%s
+                WHERE username = %s
             """, (user, ))
         query_users = cursor.fetchone()
 
@@ -30,9 +29,16 @@ async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
             raise HTTPException(status_code=404, detail="The user you requested does not exist.")
 
         cursor.execute("""
-            SELECT COUNT(Ratings.id)
+            SELECT COUNT(DISTINCT beer)
             FROM Ratings
-            WHERE user=%s
+            WHERE user = %s
+        """, (query_users[0], ))
+        query_beers = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT COUNT(id)
+            FROM Ratings
+            WHERE user = %s
         """, (query_users[0], ))
         query_ratings = cursor.fetchone()
 
@@ -40,25 +46,26 @@ async def get_user(user: str, api_key : APIKey = Depends(get_api_key)):
             "id": query_users[0],
             "username": query_users[1],
             "nationality": query_users[2],
+            "beers": query_beers[0],
             "ratings": query_ratings[0]
         }
 
 
 
 @router.get("/users/{user}/ratings", tags=["users"])
-async def get_user_ratings(user: str, count: int = 10, page: int = 1, api_key : APIKey = Depends(get_api_key)):
+async def get_user_ratings(user: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
                 SELECT uuid
                 FROM Users
-                WHERE uuid=%s
+                WHERE uuid = %s
             """, (user, ))
         else:
             cursor.execute("""
                 SELECT uuid
                 FROM Users
-                WHERE username=%s
+                WHERE username = %s
             """, (user, ))
         query_users = cursor.fetchone()
 
@@ -68,7 +75,7 @@ async def get_user_ratings(user: str, count: int = 10, page: int = 1, api_key : 
         cursor.execute("""
             SELECT id
             FROM Ratings
-            WHERE user=%s
+            WHERE user = %s
             ORDER BY date DESC
             LIMIT %s, %s
         """, (query_users[0], (page - 1) * count, count))
@@ -84,19 +91,19 @@ async def get_user_ratings(user: str, count: int = 10, page: int = 1, api_key : 
 
 
 @router.get("/users/{user}/ratings/since/{date}", tags=["users"])
-async def get_user_ratings_since(user: str, date: str, api_key : APIKey = Depends(get_api_key)):
+async def get_user_ratings_since(user: str, date: str):
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
                 SELECT uuid
                 FROM Users
-                WHERE uuid=%s
+                WHERE uuid = %s
             """, (user, ))
         else:
             cursor.execute("""
                 SELECT uuid
                 FROM Users
-                WHERE username=%s
+                WHERE username = %s
             """, (user, ))
         query_users = cursor.fetchone()
 
@@ -121,7 +128,7 @@ async def get_user_ratings_since(user: str, date: str, api_key : APIKey = Depend
             SELECT id
             FROM Ratings
             WHERE
-                user=%s AND
+                user = %s AND
                 date BETWEEN
                     DATE_SUB(NOW(), INTERVAL {date_interval} {date_type})
                     AND NOW()
@@ -139,7 +146,7 @@ async def get_user_ratings_since(user: str, date: str, api_key : APIKey = Depend
 
 
 @router.get("/users/search/{username}", tags=["users"])
-async def search_user(username: str, count: int = 10, page: int = 1, api_key: APIKey = Depends(get_api_key)):
+async def search_user(username: str, count: int = 10, page: int = 1):
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT uuid, username
