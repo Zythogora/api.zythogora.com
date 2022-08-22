@@ -375,7 +375,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
                 UPDATE Collections
                 SET first = %s
                 WHERE id = %s
-            """, (query_previous[0], collection_id))
+            """, (query_item[2], collection_id))
 
         if query_item[2]:
             cursor.execute("""
@@ -388,7 +388,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
                 UPDATE Collections
                 SET last = %s
                 WHERE id = %s
-            """, (query_next[0], collection_id))
+            """, (query_item[1], collection_id))
 
         connection.commit()
 
