@@ -7,6 +7,7 @@ router = APIRouter()
 
 @router.get("/servings/{serving_id}", tags=["servings"])
 async def get_serving(serving_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name
@@ -27,6 +28,7 @@ async def get_serving(serving_id: int):
 
 @router.get("/servings", tags=["servings"])
 async def get_servings():
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -46,6 +48,7 @@ async def get_servings():
 
 @router.get("/servings/search/{serving_name}", tags=["servings"])
 async def search_serving(serving_name: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Servings")
         query_servings = cursor.fetchall()

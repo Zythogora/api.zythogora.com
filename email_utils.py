@@ -15,6 +15,7 @@ context = ssl.create_default_context()
 
 
 def get_message(sender, sender_name, receiver, subject, content, receiver_uuid, is_unsubscribable):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT username
@@ -140,6 +141,7 @@ def send_email(receiver, subject, content, receiver_uuid, is_unsubscribable=Fals
     if not message:
         return False
 
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             INSERT INTO Emails_Sent

@@ -17,6 +17,7 @@ class Collection(BaseModel):
 
 @router.post("/collections", tags=["collections"])
 async def add_collection(collection: Collection, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             INSERT INTO Collections
@@ -36,6 +37,7 @@ async def add_collection(collection: Collection, api_key : APIKey = Depends(get_
 
 @router.get("/collections/{collection_id}", tags=["collections"])
 async def get_collection(collection_id: int, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, first, last, owner, is_public, creation_date, last_modification
@@ -93,6 +95,7 @@ async def get_collection(collection_id: int, api_key : APIKey = Depends(get_api_
 
 @router.patch("/collections/{collection_id}", tags=["collections"])
 async def edit_collection(collection_id: int, collection: Collection, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, owner
@@ -120,6 +123,7 @@ async def edit_collection(collection_id: int, collection: Collection, api_key : 
 
 @router.delete("/collections/{collection_id}", tags=["collections"])
 async def delete_collection(collection_id: int, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, first, last, owner
@@ -167,6 +171,7 @@ async def delete_collection(collection_id: int, api_key : APIKey = Depends(get_a
 
 @router.post("/collections/{collection_id}/{beer_id}", tags=["collections"])
 async def add_collection_item(collection_id: int, beer_id: int, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, first, last, owner
@@ -235,8 +240,9 @@ class CollectionItem(BaseModel):
 @router.patch("/collections/{collection_id}/{beer_id}", tags=["collections"])
 async def move_collection_item(collection_id: int, beer_id: int, item: CollectionItem, api_key : APIKey = Depends(get_api_key)):
     if item.previous == beer_id or item.next == beer_id:
-        raise HTTPException(status_code=400, detail="The request body is invalid. (0)")
+        raise HTTPException(status_code=400, detail="The request body is invalid.")
 
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, first, last, owner
@@ -270,7 +276,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
             query_previous = cursor.fetchone()
 
             if not query_previous:
-                raise HTTPException(status_code=400, detail="The request body is invalid. (1a)")
+                raise HTTPException(status_code=400, detail="The request body is invalid.")
 
         if item.next != None:
             cursor.execute("""
@@ -281,7 +287,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
             query_next = cursor.fetchone()
 
             if not query_next:
-                raise HTTPException(status_code=400, detail="The request body is invalid. (1b)")
+                raise HTTPException(status_code=400, detail="The request body is invalid.")
 
         if item.previous == None and item.next == None:
             if query_item[1] == None and query_item[2] == None:
@@ -289,7 +295,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
                     "status": "Nothing to do."
                 }
             else:
-                raise HTTPException(status_code=400, detail="The request body is invalid. (2)")
+                raise HTTPException(status_code=400, detail="The request body is invalid.")
 
         if (item.previous == None) and (item.next != None and query_next[1] == query_item[0]) \
         or (item.previous != None and query_previous[2] == query_item[0]) and (item.next == None) \
@@ -300,7 +306,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
 
         if item.previous != None and item.next == None:
             if query_previous[2] != None or query_collection[2] != query_previous[0]:
-                raise HTTPException(status_code=400, detail="The request body is invalid. (3)")
+                raise HTTPException(status_code=400, detail="The request body is invalid.")
 
             cursor.execute("""
                 UPDATE Collections
@@ -322,7 +328,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
 
         if item.previous == None and item.next != None:
             if query_next[1] != None or query_collection[1] != query_next[0]:
-                raise HTTPException(status_code=400, detail="The request body is invalid. (4)")
+                raise HTTPException(status_code=400, detail="The request body is invalid.")
 
             cursor.execute("""
                 UPDATE Collections
@@ -344,7 +350,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
 
         if item.previous != None and item.next != None:
             if query_previous[2] != query_next[0] or query_next[1] != query_previous[0]:
-                raise HTTPException(status_code=400, detail="The request body is invalid. (5)")
+                raise HTTPException(status_code=400, detail="The request body is invalid.")
 
             cursor.execute("""
                 UPDATE Collection_Items
@@ -398,6 +404,7 @@ async def move_collection_item(collection_id: int, beer_id: int, item: Collectio
 
 @router.delete("/collections/{collection_id}/{beer_id}", tags=["collections"])
 async def remove_collection_item(collection_id: int, beer_id: int, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, owner

@@ -13,6 +13,7 @@ class Style(BaseModel):
 
 @router.post("/styles", tags=["styles"])
 async def add_style(response: Response, style: Style, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         style_id = None
         substyle_id = None
@@ -98,6 +99,7 @@ async def add_style(response: Response, style: Style, api_key : APIKey = Depends
 
 @router.get("/styles/{style_id}", tags=["styles"])
 async def get_style(style_id: int, depth: int = -1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, parent
@@ -124,6 +126,7 @@ async def get_style(style_id: int, depth: int = -1):
 
 @router.get("/styles", tags=["styles"])
 async def get_styles():
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -143,6 +146,7 @@ async def get_styles():
 
 @router.get("/styles/search/{style_name}", tags=["styles"])
 async def search_style(style_name: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Styles")
         query_styles = cursor.fetchall()

@@ -10,6 +10,7 @@ router = APIRouter()
 
 @router.get("/users/{user}", tags=["users"])
 async def get_user(user: str):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
@@ -54,6 +55,7 @@ async def get_user(user: str):
 
 @router.get("/users/{user}/ratings", tags=["users"])
 async def get_user_ratings(user: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
@@ -92,6 +94,7 @@ async def get_user_ratings(user: str, count: int = 10, page: int = 1):
 
 @router.get("/users/{user}/ratings/since/{date}", tags=["users"])
 async def get_user_ratings_since(user: str, date: str):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
@@ -147,6 +150,7 @@ async def get_user_ratings_since(user: str, date: str):
 
 @router.get("/users/search/{username}", tags=["users"])
 async def search_user(username: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT uuid, username

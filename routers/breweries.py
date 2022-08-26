@@ -16,6 +16,7 @@ class Brewery(BaseModel):
 
 @router.post("/breweries", tags=["breweries"])
 async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -55,6 +56,7 @@ async def add_brewery(response: Response, brewery: Brewery, api_key : APIKey = D
 
 @router.get("/breweries/{brewery_id}", tags=["breweries"])
 async def get_brewery(brewery_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, country
@@ -78,6 +80,7 @@ async def get_brewery(brewery_id: int):
 
 @router.get("/breweries/{brewery_id}/beers", tags=["breweries"])
 async def get_brewery_beers(brewery_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -97,6 +100,7 @@ async def get_brewery_beers(brewery_id: int):
 
 @router.get("/breweries/search/{brewery_name}", tags=["breweries"])
 async def search_brewery(brewery_name: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT Breweries.id, Breweries.name, SUM(Sub.popularity) AS popularity FROM (

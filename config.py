@@ -23,12 +23,6 @@ connection = database.connect(
 
 key = APIKeyQuery(name="api-key", auto_error=False)
 async def get_api_key(request: Request, key: str = Security(key)):
-
-    # Refresh connection if needed
-
-    connection.ping(reconnect=True)
-
-
     # JWT Auth
 
     jwt_header = request.headers.get("Authorization")
@@ -45,6 +39,7 @@ async def get_api_key(request: Request, key: str = Security(key)):
 
     # API Key Auth
 
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         if not key:
             raise HTTPException(status_code=401, detail="Unauthorized")

@@ -23,6 +23,7 @@ class Rating(BaseModel):
 
 @router.post("/ratings", tags=["ratings"])
 async def add_rating(response: Response, rating: Rating, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -76,6 +77,7 @@ async def add_rating(response: Response, rating: Rating, api_key : APIKey = Depe
 
 @router.get("/ratings/{rating_id}", tags=["ratings"])
 async def get_rating(rating_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT

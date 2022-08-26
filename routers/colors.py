@@ -7,6 +7,7 @@ router = APIRouter()
 
 @router.get("/colors/{color_id}", tags=["colors"])
 async def get_color(color_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, color
@@ -28,6 +29,7 @@ async def get_color(color_id: int):
 
 @router.get("/colors", tags=["colors"])
 async def get_colors():
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -46,6 +48,7 @@ async def get_colors():
 
 @router.get("/colors/search/{color_name}", tags=["colors"])
 async def search_color(color_name: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Colors")
         query_colors = cursor.fetchall()

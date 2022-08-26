@@ -7,6 +7,7 @@ router = APIRouter()
 
 @router.get("/countries/{country_id}", tags=["countries"])
 async def get_country(country_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, code, flag, phone
@@ -30,6 +31,7 @@ async def get_country(country_id: int):
 
 @router.get("/countries", tags=["countries"])
 async def get_countries():
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -49,6 +51,7 @@ async def get_countries():
 
 @router.get("/countries/search/{country_name}", tags=["countries"])
 async def search_country(country_name: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id, name FROM Countries")
         query_countries = cursor.fetchall()

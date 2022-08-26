@@ -16,6 +16,7 @@ router = APIRouter()
 
 @router.get("/top/beers", tags=["top"])
 async def get_top_beers(count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT
@@ -83,6 +84,7 @@ async def get_top_beers(count: int = 10, page: int = 1):
 
 @router.get("/top/beers/{user}", tags=["top"])
 async def get_user_top_beers(user: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""
@@ -175,6 +177,7 @@ async def get_user_top_beers(user: str, count: int = 10, page: int = 1):
 
 @router.get("/top/breweries", tags=["top"])
 async def get_top_breweries(count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT
@@ -252,6 +255,7 @@ async def get_top_breweries(count: int = 10, page: int = 1):
 
 @router.get("/top/breweries/{user}", tags=["top"])
 async def get_user_top_breweries(user: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         if "-" in user:
             cursor.execute("""

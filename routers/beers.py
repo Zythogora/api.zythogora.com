@@ -22,6 +22,7 @@ class Beer(BaseModel):
 
 @router.post("/beers", tags=["beers"])
 async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id
@@ -87,6 +88,7 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
 
 @router.get("/beers/{beer_id}", tags=["beers"])
 async def get_beer(beer_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT id, name, brewery, style, abv, ibu, color
@@ -121,6 +123,7 @@ async def get_beer(beer_id: int):
 
 @router.get("/beers/{beer_id}/ratings", tags=["beers"])
 async def get_beer_ratings(beer_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
         query_beers = cursor.fetchone()
@@ -146,6 +149,7 @@ async def get_beer_ratings(beer_id: int):
 
 @router.get("/beers/{beer_id}/averageScore", tags=["beers"])
 async def get_beer_average_score(beer_id: int):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
         query_beers = cursor.fetchone()
@@ -172,6 +176,7 @@ async def get_beer_average_score(beer_id: int):
 
 @router.get("/beers/search/{beer_name}", tags=["beers"])
 async def search_beer(beer_name: str, count: int = 10, page: int = 1):
+    connection.ping(reconnect=True)
     with connection.cursor(prepared=True) as cursor:
         cursor.execute("""
             SELECT Beers.id, Beers.name, SUM(Ratings.score) AS popularity FROM Beers
