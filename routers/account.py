@@ -1,8 +1,9 @@
 from argon2 import PasswordHasher
-from config import connection, get_random_string, search
+from config import connection, get_api_key, get_random_string, search
 import datetime
 from email_utils import send_email
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security.api_key import APIKey
 import jwt
 import os
 from pydantic import BaseModel
@@ -16,6 +17,35 @@ router = APIRouter()
 alphanumeric_pattern = re.compile("^[a-zA-Z0-9_]+$")
 email_pattern = re.compile("^([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+$")
 password_pattern = re.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})")
+
+
+
+def generateAccessToken(user_uuid: string):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT username
+            FROM Users
+            WHERE uuid=%s
+        """, (user_uuid,))
+        query_users = cursor.fetchone()
+
+        if not query_users:
+            raise HTTPException(status_code=401, detail="Invalid request")
+
+        # create a new access token that expires in one hour
+        access_token_iat = int(time.time())
+        access_token_exp = access_token_iat + 60 * 60
+
+        access_token = jwt.encode(
+            {
+                "client_id": user_uuid,
+                "nickname": query_users[0],
+                "iat": access_token_iat,
+                "exp": access_token_exp,
+            }, os.environ["zythogora_jwt_secret"], algorithm="HS512")
+
+        return access_token
 
 
 
@@ -42,14 +72,7 @@ async def login(login: Login):
         except:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        now = int(time.time())
-        token = jwt.encode(
-            {
-                "client_id": query_users[0],
-                "nickname": query_users[1],
-                "iat": now,
-                "exp": now + 60 * 60 * 24 * 7 * 6,
-            }, os.environ["zythogora_jwt_secret"], algorithm="HS512")
+        token = generateAccessToken(query_users[0])
 
         return { "token": token }
 
@@ -74,22 +97,15 @@ async def loginWithRefresh(login: Login):
         except:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        now = int(time.time())
-
-        # create a new access token that expires in one hour
-        access_token_exp = now + 60 * 60
-        access_token = jwt.encode(
-            {
-                "client_id": query_users[0],
-                "nickname": query_users[1],
-                "iat": now,
-                "exp": access_token_exp,
-            }, os.environ["zythogora_jwt_secret"], algorithm="HS512")
+        access_token = generateAccessToken(query_users[0])
 
         # create a new refresh token that expires in two weeks
         alphabet = string.ascii_letters + string.digits
+
         refresh_token = ''.join(secrets.choice(alphabet) for i in range(512))
-        refresh_token_exp = now + 60 * 60 * 24 * 14
+        refresh_token_iat = int(time.time())
+        refresh_token_exp = refresh_token_iat + 60 * 60 * 24 * 14
+
         cursor.execute("""
             INSERT INTO Refresh_Tokens
             (user, token, expiration_time)
@@ -104,6 +120,36 @@ async def loginWithRefresh(login: Login):
         return {
             "access_token": access_token,
             "refresh_token": refresh_token
+        }
+
+
+
+class RefreshAccessToken(BaseModel):
+    user: str
+    refresh_token: str
+
+@router.post("/account/refreshAccessToken", tags=["account"])
+async def refresh_access_token(refresh_access_token: RefreshAccessToken):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT expiration_time
+            FROM Refresh_Tokens
+            WHERE user=%s AND token=%s
+        """, (refresh_access_token.user, refresh_access_token.refresh_token))
+        query_refresh_tokens = cursor.fetchone()
+
+        if not query_refresh_tokens:
+            raise HTTPException(status_code=401, detail="That session does not exist")
+
+        if query_refresh_tokens[0] < datetime.datetime.now():
+            raise HTTPException(status_code=403, detail="Your session has expired")
+
+        access_token = generateAccessToken(refresh_access_token.user)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_access_token.refresh_token
         }
 
 
