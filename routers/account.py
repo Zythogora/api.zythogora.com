@@ -97,7 +97,7 @@ async def loginWithRefresh(login: Login):
         """, (
             query_users[0],
             refresh_token,
-            refresh_token_exp
+            datetime.datetime.fromtimestamp(refresh_token_exp).strftime('%Y-%m-%d %H:%M:%S')
         ))
         connection.commit()
 
