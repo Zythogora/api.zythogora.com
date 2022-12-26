@@ -174,6 +174,61 @@ async def get_beer_average_score(beer_id: int):
 
 
 
+@router.get("/beers/{beer_id}/reviews/me", tags=["beers", "reviews"])
+async def get_my_beer_reviews(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
+        query_beers = cursor.fetchone()
+
+        if not query_beers:
+            raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
+
+        cursor.execute("""
+            SELECT id FROM Ratings
+            WHERE beer=%s AND user=%s
+            ORDER BY date DESC
+        """, (beer_id, api_key["user"]))
+        query_reviews = cursor.fetchall()
+
+        res = [ ]
+        for row in query_reviews:
+            review = await r_ratings.get_rating(row[0])
+            res.append(review)
+
+        return res
+
+
+
+@router.get("/beers/{beer_id}/reviews/friends", tags=["beers", "reviews"])
+async def get_my_beer_reviews(beer_id: int, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("SELECT id FROM Beers WHERE id=%s", (beer_id,))
+        query_beers = cursor.fetchone()
+
+        if not query_beers:
+            raise HTTPException(status_code=404, detail="The beer you requested does not exist.")
+
+        cursor.execute("""
+            SELECT * FROM Ratings
+            WHERE beer=%s AND user IN (
+                SELECT friend FROM Friends
+                WHERE user=%s AND request_accepted=1
+            )
+            ORDER BY date DESC
+        """, (beer_id, api_key["user"]))
+        query_reviews = cursor.fetchall()
+
+        res = [ ]
+        for row in query_reviews:
+            review = await r_ratings.get_rating(row[0])
+            res.append(review)
+
+        return res
+
+
+
 @router.get("/beers/search/{beer_name}", tags=["beers"])
 async def search_beer(beer_name: str, count: int = 10, page: int = 1):
     connection.ping(reconnect=True)
