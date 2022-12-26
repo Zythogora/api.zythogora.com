@@ -7,6 +7,8 @@ import jwt
 import os
 from pydantic import BaseModel
 import re
+import secrets
+import string
 import time
 
 router = APIRouter()
@@ -50,6 +52,59 @@ async def login(login: Login):
             }, os.environ["zythogora_jwt_secret"], algorithm="HS512")
 
         return { "token": token }
+
+
+
+@router.post("/account/login", tags=["account"])
+async def loginWithRefresh(login: Login):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT uuid, username, password_hash
+            FROM Users
+            WHERE username=%s
+        """, (login.username,))
+        query_users = cursor.fetchone()
+
+        if not query_users:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        try:
+            PasswordHasher().verify(query_users[2], login.password)
+        except:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        now = int(time.time())
+
+        # create a new access token that expires in one hour
+        access_token_exp = now + 60 * 60
+        access_token = jwt.encode(
+            {
+                "client_id": query_users[0],
+                "nickname": query_users[1],
+                "iat": now,
+                "exp": access_token_exp,
+            }, os.environ["zythogora_jwt_secret"], algorithm="HS512")
+
+        # create a new refresh token that expires in two weeks
+        alphabet = string.ascii_letters + string.digits
+        refresh_token = ''.join(secrets.choice(alphabet) for i in range(512))
+        refresh_token_exp = now + 60 * 60 * 24 * 14
+        cursor.execute("""
+            INSERT INTO Refresh_Tokens
+            (user, token, expiration_time)
+            VALUES (%s, %s, %s)
+        """, (
+            query_users[0],
+            refresh_token,
+            refresh_token_exp
+        ))
+        connection.commit()
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
 
 
 
