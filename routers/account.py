@@ -49,6 +49,18 @@ def generateAccessToken(user_uuid: string):
 
 
 
+def deleteAllRefreshTokens(user_uuid: string):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            DELETE
+            FROM Refresh_Tokens
+            WHERE user=%s
+        """, (user_uuid,))
+        connection.commit()
+
+
+
 class Login(BaseModel):
     username: str
     password: str
@@ -182,14 +194,7 @@ async def logout(logout: Logout, api_key : APIKey = Depends(get_api_key)):
 
 @router.post("/account/logoutAll", tags=["account"])
 async def logout_all(api_key : APIKey = Depends(get_api_key)):
-    connection.ping(reconnect=True)
-    with connection.cursor(prepared=True) as cursor:
-        cursor.execute("""
-            DELETE
-            FROM Refresh_Tokens
-            WHERE user=%s
-        """, (api_key["user"],))
-        connection.commit()
+    deleteAllRefreshTokens(api_key["user"])
 
 
 
@@ -400,7 +405,7 @@ async def reset_password(reset_password: ResetPassword):
         ))
         connection.commit()
 
-        #TODO: Disconnect all logged in users
+        deleteAllRefreshTokens(query_users[0])
 
         content = """
             <p>
