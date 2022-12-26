@@ -154,6 +154,45 @@ async def refresh_access_token(refresh_access_token: RefreshAccessToken):
 
 
 
+class Logout(BaseModel):
+    refresh_token: str
+
+@router.post("/account/logout", tags=["account"])
+async def logout(logout: Logout, api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            SELECT id
+            FROM Refresh_Tokens
+            WHERE user=%s AND token=%s
+        """, (api_key["user"], logout.refresh_token))
+        query_refresh_tokens = cursor.fetchone()
+
+        if not query_refresh_tokens:
+            raise HTTPException(status_code=401, detail="That session does not exist")
+
+        cursor.execute("""
+            DELETE
+            FROM Refresh_Tokens
+            WHERE token=%s
+        """, (logout.refresh_token,))
+        connection.commit()
+
+
+
+@router.post("/account/logoutAll", tags=["account"])
+async def logout_all(api_key : APIKey = Depends(get_api_key)):
+    connection.ping(reconnect=True)
+    with connection.cursor(prepared=True) as cursor:
+        cursor.execute("""
+            DELETE
+            FROM Refresh_Tokens
+            WHERE user=%s
+        """, (api_key["user"],))
+        connection.commit()
+
+
+
 class Register(BaseModel):
     firstname: str
     lastname: str
