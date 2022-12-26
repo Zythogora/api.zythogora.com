@@ -64,6 +64,7 @@ def deleteAllRefreshTokens(user_uuid: string):
 class Login(BaseModel):
     username: str
     password: str
+    remember_me: bool = True
 
 @router.post("/users/login", tags=["users"])
 async def login(login: Login):
@@ -111,23 +112,26 @@ async def loginWithRefresh(login: Login):
 
         access_token = generateAccessToken(query_users[0])
 
-        # create a new refresh token that expires in two weeks
-        alphabet = string.ascii_letters + string.digits
+        refresh_token = None
 
-        refresh_token = ''.join(secrets.choice(alphabet) for i in range(512))
-        refresh_token_iat = int(time.time())
-        refresh_token_exp = refresh_token_iat + 60 * 60 * 24 * 14
+        if login.remember_me:
+            # create a new refresh token that expires in two weeks
+            alphabet = string.ascii_letters + string.digits
 
-        cursor.execute("""
-            INSERT INTO Refresh_Tokens
-            (user, token, expiration_time)
-            VALUES (%s, %s, %s)
-        """, (
-            query_users[0],
-            refresh_token,
-            datetime.datetime.fromtimestamp(refresh_token_exp).strftime('%Y-%m-%d %H:%M:%S')
-        ))
-        connection.commit()
+            refresh_token = ''.join(secrets.choice(alphabet) for i in range(512))
+            refresh_token_iat = int(time.time())
+            refresh_token_exp = refresh_token_iat + 60 * 60 * 24 * 14
+
+            cursor.execute("""
+                INSERT INTO Refresh_Tokens
+                (user, token, expiration_time)
+                VALUES (%s, %s, %s)
+            """, (
+                query_users[0],
+                refresh_token,
+                datetime.datetime.fromtimestamp(refresh_token_exp).strftime('%Y-%m-%d %H:%M:%S')
+            ))
+            connection.commit()
 
         return {
             "access_token": access_token,
