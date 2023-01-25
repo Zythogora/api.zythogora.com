@@ -125,8 +125,6 @@ async def get_user_ratings_since(user: str, date: str):
         if date_interval <= 0:
             raise HTTPException(status_code=422, detail="Invalid duration.")
         
-        print(date_type, date_interval)
-
         cursor.execute(f"""
             SELECT id
             FROM Ratings
