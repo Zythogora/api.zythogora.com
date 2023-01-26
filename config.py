@@ -29,12 +29,29 @@ async def get_api_key(request: Request, key: str = Security(key)):
     if jwt_header:
         try:
             token = jwt.decode(jwt_header, os.environ["zythogora_jwt_secret"], algorithms=["HS512"])
+
             return {
                 "user": token["client_id"],
                 "exp": token["exp"]
             }
+
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "error": "AUTH_EXPIRED_ACCESS_TOKEN",
+                    "message": "Your access token has expired."
+                }
+            )
+
         except:
-            raise HTTPException(status_code=401, detail="Unauthorized")
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "error": "AUTH_INVALID_ACCESS_TOKEN",
+                    "message": "That access token is invalid."
+                }
+            )
 
 
     # API Key Auth
