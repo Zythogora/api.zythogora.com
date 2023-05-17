@@ -29,7 +29,8 @@ async def get_api_key(request: Request, key: str = Security(key)):
     jwt_header = request.headers.get("Authorization")
     if jwt_header:
         try:
-            token = jwt.decode(jwt_header, os.environ["zythogora_jwt_secret"], algorithms=["HS512"])
+            # FIXME: EXPIRATION TIME IS UNCHECKED UNTIL THE MIGRATION IS PERFORMED
+            token = jwt.decode(jwt_header, os.environ["zythogora_jwt_secret"], algorithms=["HS512"], options={"verify_exp": False})
 
             return {
                 "user": token["client_id"],
