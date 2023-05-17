@@ -8,6 +8,7 @@ import os
 from pyjarowinkler.distance import get_jaro_distance
 import random
 import string
+import unicodedata
 
 
 
@@ -104,8 +105,13 @@ async def get_api_key(request: Request, key: str = Security(key)):
 
 
 
+def normalize_str(input_str: str):
+    lower_str = input_str.lower()
+    normalized_str = unicodedata.normalize('NFD', lower_str).encode('ASCII', 'ignore').decode("utf-8")
+    return normalized_str
+
 async def search(search_term: str, term_query, count: int = 10, page: int = 1):
-    search_term = search_term.lower()
+    search_term = normalize_str(search_term)
 
     if len(term_query) <= (page - 1) * count:
         return [ ]
@@ -114,7 +120,7 @@ async def search(search_term: str, term_query, count: int = 10, page: int = 1):
     contains = [ ]
     jaro_winkler = { }
     for el in term_query:
-        term = el[1].lower()
+        term = normalize_str(el[1])
 
         if term == search_term:
             res.insert(0, el[0])
