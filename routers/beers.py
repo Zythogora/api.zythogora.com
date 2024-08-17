@@ -55,7 +55,7 @@ async def add_beer(response: Response, beer: Beer, api_key : APIKey = Depends(ge
             if beer.abv < 0 or beer.abv > 100:
                 raise HTTPException(status_code=422, detail="ABV value invalid")
 
-            if beer.ibu and (beer.ibu < 0 or beer.ibu > 100):
+            if beer.ibu and beer.ibu < 0:
                 raise HTTPException(status_code=422, detail="IBU value invalid")
 
             cursor.execute("""
